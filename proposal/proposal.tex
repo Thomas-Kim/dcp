@@ -30,9 +30,30 @@
 \begin{document}
 
 \maketitle % Insert title
+% Timeline Project is due 12/02
 
-Hello, World!
+\section{Overview}
+An improved version of 'cp -r' is proposed.
+This version will take advantage of Linux's asynchronous IO interfaces to create
+opportunities for parallelism, and will minimize the time spent blocking on disk
+IO by leveraging fallocate and readahead.
 
+\section{Key features}
+
+\section{Timeline}
+This project will follow a weekly timeline. \\
+\begin{tabular}{|l | l|}
+\hline
+10/13 & Start \\
+10/20 & Naive implementation complete \\
+10/27 & MPMC complete \\
+11/03 & readahead complete \\
+11/10 & fallocate complete \\
+11/17 & Testing/optimization \\
+11/24 & Benchmarking \\
+12/01 & Complete \\
+\hline
+\end{tabular}
 \bibliographystyle{plain}
 \bibliography{citations}
 \end{document}
