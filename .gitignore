@@ -2,3 +2,6 @@ bin/
 lib/
 *.swo
 *.swp
+*.pdf
+*.aux
+*.log

@@ -7,13 +7,13 @@ MKDIRS=lib bin tst/bin .pass .pass/tst/bin
 INCLUDE=$(addprefix -I,include)
 EXECS=$(addprefix bin/,dcp)
 TESTS=$(addprefix tst/bin,)
-
-.PHONY: default all clean again check
+PAPERS=proposal/proposal.pdf
+.PHONY: default all clean again check papers
 .SECONDARY:
 default: all
 all: $(EXECS) $(TESTS)
 clean:
-	rm -rf $(MKDIRS)
+	rm -rf $(MKDIRS) $(PAPERS)
 again: clean all
 check: $(addprefix .pass/,$(TESTS))
 .pass/tst/bin/%: tst/bin/% | .pass/tst/bin
@@ -21,6 +21,7 @@ check: $(addprefix .pass/,$(TESTS))
 	@$<\
 		&& echo -e "\033[0;32mpass\033[0m" && touch $@\
 		|| echo -e "\033[0;32mfail\033[0m"
+papers: $(PAPERS)
 $(MKDIRS):
 	@mkdir -p $@
 bin/%: %.cpp | bin
@@ -35,3 +36,5 @@ tst/bin/%: tst/%.cpp lib/%.o | tst/bin
 	$(CPP) $(CPPFLAGS) $(INCLUDE) $^ -o $@
 tst/bin/%: tst/%.c lib/%.o | tst/bin
 	$(CC) $(CFLAGS) $(INCLUDE) $^ -o $@
+%.pdf: %.tex
+	pdflatex -output-directory $(@D) $<
