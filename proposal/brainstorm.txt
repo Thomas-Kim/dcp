@@ -1,0 +1,9 @@
+Number of threads
+queue up multiple AIO for reads
+keep track of pages in memory
+fallocate
+readahead
+2 MPMC, 1 for directory 1 for file.
+Prioritize directories -> Large files -> Small files
+  Is it possible to queue up a bunch of inode writes first? (locality)
+
