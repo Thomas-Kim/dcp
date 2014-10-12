@@ -6,4 +6,7 @@ readahead
 2 MPMC, 1 for directory 1 for file.
 Prioritize directories -> Large files -> Small files
   Is it possible to queue up a bunch of inode writes first? (locality)
-
+dynamically calibrate copy concurrency
+detect hard links and only read linked files once
+can we explicitly not update access time?
+compare blocking/non-blocking I/O
