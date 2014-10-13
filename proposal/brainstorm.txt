@@ -11,3 +11,5 @@ detect hard links and only read linked files once
 can we explicitly not update access time?
 compare blocking/non-blocking I/O
 fadvise vs mmap/madvise
+compare threaded synchronous I/O vs threaded asynchronous I/O vs unthreaded asynchronous I/O
+a calibratable form of threaded asynchronous I/O will be sufficient to implement all three of the above
