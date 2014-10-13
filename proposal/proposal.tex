@@ -36,9 +36,57 @@
 An improved version of 'cp -r' is proposed.
 This version will take advantage of Linux's asynchronous IO interfaces to create
 opportunities for parallelism, and will minimize the time spent blocking on disk
-IO by leveraging fallocate and readahead.
+IO by leveraging fallocate and readahead. Furthermore, to ensure no requests to
+paged out pages in the buffer are blindly initiated, a kernel module to service
+requests from dcp for page table entries is proposed.
 
 \section{Key features}
+\subsection{Asynchronous I/O}
+Dcp will use asynchronous I/O to populate a per-thread in-memory buffer.
+Both fixed-size and adaptive-sized buffers will be tested.
+For adaptive sizing of the buffer, the size of physical memory
+and number of free physical pages will be considered when allocating
+the buffer, and can be resized at a regular interval based on system load.
+Requests for both reads and writes will be made using the POSIX AIO interface
+\cite{manaio}.
+
+\subsection{Adaptive buffer sizing}
+As mentioned in the previous section on asynchronous I/O, an adaptive
+sizing of the per-thread buffer will be implemented and evaluated for
+performance. The combination of increasing the size of the buffer for
+larger physical memory sizes and FADV\_SEQUENTIAL, disk idle time could
+possibly be reduced by allowing for larger concurrent read requests.
+For systems with older and slower disks, as well as directory trees
+with a large number of very small files, having a larger buffer
+will not necessarily positively affect dcp's efficiency.
+
+\subsection{Multithreading}
+Three alternatives for multithreading will be compared for dcp,
+threaded synchronous I/O, threaded asynchronous I/O, and unthreaded
+asynchronous I/O (\textit{see section 3})
+
+\subsection{Fallocate}
+POSIX fallocate will be used to allow the destination filesystem to
+allocate blocks in an efficient way. The use of fallocate is
+fairly straightforward and is expected to increase write speeds
+provided the filesystem on the destination disk intelligently
+allocates blocks.
+
+\subsection{Readahead}
+POSIX fadvise will be used to ensure that pages will be available
+in the buffer cache when read, and that pages will be evicted from
+the cache as soon as possible. Both reads and writes in dcp will
+generally (\textit{see Page Presence Tracking}) be sequential.
+
+\subsection{Page Presence Tracking}
+In order for dcp to be aware of any pages in the per-thread buffer that
+are paged out, a kernel module to fetch and return page table entries to
+dcp is proposed. Using the page table entries, dcp will have a better
+idea of whether the next sequential page in the buffer is in memory,
+and can make asynchronous IO requests for pages that are in memory
+before page faulting for those pages which were paged out.
+
+\section{Benchmarking methodology}
 
 \section{Timeline}
 This project will follow a weekly timeline. \\
@@ -54,6 +102,8 @@ This project will follow a weekly timeline. \\
 12/01 & Complete \\
 \hline
 \end{tabular}
+
+
 \bibliographystyle{plain}
 \bibliography{citations}
 \end{document}
