@@ -10,3 +10,4 @@ dynamically calibrate copy concurrency
 detect hard links and only read linked files once
 can we explicitly not update access time?
 compare blocking/non-blocking I/O
+fadvise vs mmap/madvise
