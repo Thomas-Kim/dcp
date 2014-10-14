@@ -75,6 +75,10 @@ reading a small file as opposed to a large file, grouping inode
 reads in this way can potentially provide greater benefits to
 overall execution time than prioritizing large file reads.
 
+Techniques to dynamically alter reads demanded of the disk will be
+experimented with, such as adapting the number of currently open files
+in dcp to match the capabilities of the system.
+
 \subsection{Multithreading}
 Three alternatives for multithreading will be compared for dcp,
 threaded synchronous I/O, threaded asynchronous I/O, and unthreaded
