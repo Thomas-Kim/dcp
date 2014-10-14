@@ -39,10 +39,10 @@ opportunities for parallelism, and will minimize the time spent blocking on disk
 IO by leveraging fallocate and readahead. Furthermore, to ensure no requests to
 paged out pages in the buffer are blindly initiated, a kernel module to service
 requests from dcp for page table entries is proposed. In order to ensure reads
-always result in hits in the buffer cache, POSIX fadvise will be used. To ensure optimal
-layout of files for writing, POSIX fallocate will be used. As an alternative to
-using fadvise, an alternate implementation which uses mmap and madvise instead will
-be compared to the initial implementation.
+are more likely to result in hits in the buffer cache when memory is scarce, POSIX
+fadvise will be used. To ensure optimal layout of files for writing, POSIX
+fallocate will be used. As an alternative to using fadvise, an alternate
+implementation which uses mmap and madvise instead will be compared to the initial implementation.
 
 \section{Key features}
 \subsection{General optimizations}
@@ -50,6 +50,8 @@ be compared to the initial implementation.
     \item Hard links will be detected and the associated inode and file will
           only be read once.
     \item st\_atime updates will be suppressed using O\_NOATIME
+    \item Modification of CWD during execution to reduce the number
+          of directory reads
 \end{itemize}
 \subsection{Asynchronous I/O}
 Dcp will use asynchronous I/O to populate a per-thread in-memory buffer.
@@ -57,18 +59,23 @@ Both fixed-size and adaptive-sized buffers will be tested.
 For adaptive sizing of the buffer, the size of physical memory
 and number of free physical pages will be considered when allocating
 the buffer, and can be resized at a regular interval based on system load.
-Requests for both reads and writes will be made using the POSIX AIO interface
-\cite{manaio}.
+Requests for both reads and writes will be made using the POSIX AIO interface.
 
-Concurrent reads will be accomplished by using 2 MPMC queues,
-used to queue up future directory and file reads.
+Concurrent reads will be accomplished by using 2 MPMC queues.
 One queue will be used for directories and one for files.
 Since the reading of directories is a potential bottleneck, threads
 reading directories will be prioritized over those reading files.
-Since the time taken to read a large file is dominated by
-the sequential read time, as opposed to the seek time overhead
-when reading a small file, small files will be prioritized over
-large files.
+Dcp will explore prioritizing reads based on file size.
+Prioritization of large files has the advantage that starting
+longer jobs first will allow for dcp to finish executing sooner
+by utilizing parallelism.
+Prioritization of small files has the advantage that
+inode reads for small files can be grouped with inode reads for
+directories, eliminating inode seek overheads for the small files.
+Since seek time overhead comprises a larger fraction of time when
+reading a small file as opposed to a large file, grouping inode
+reads in this way can potentially provide greater benefits to
+overall execution time than prioritizing large file reads.
 
 \subsection{Multithreading}
 Three alternatives for multithreading will be compared for dcp,
@@ -92,6 +99,8 @@ with a large number of very small files, having a larger buffer
 will not necessarily positively affect dcp's efficiency.
 
 \subsection{Readahead}
+Linux readahead and POSIX fadvise provide similar functionality,
+so POSIX fadvise will be used.
 POSIX fadvise will be used to ensure that pages will be available
 in the buffer cache when read, and that pages will be evicted from
 the cache as soon as possible. Both reads and writes in dcp will
@@ -157,6 +166,4 @@ This project will follow a weekly timeline. \\
 \hline
 \end{tabular}
 
-\bibliographystyle{plain}
-\bibliography{citations}
 \end{document}
