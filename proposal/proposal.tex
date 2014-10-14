@@ -22,7 +22,7 @@
 \title{\vspace{-25mm}\fontsize{16pt}{10pt}\selectfont\textbf{Proposal}} % Article title
 
 \author{
-  \textsc{William Morriss}
+  \textsc{William Morriss} \\
   \textsc{Thomas Kim}
 }
 \date{}
@@ -38,7 +38,11 @@ This version will take advantage of Linux's asynchronous IO interfaces to create
 opportunities for parallelism, and will minimize the time spent blocking on disk
 IO by leveraging fallocate and readahead. Furthermore, to ensure no requests to
 paged out pages in the buffer are blindly initiated, a kernel module to service
-requests from dcp for page table entries is proposed.
+requests from dcp for page table entries is proposed. In order to ensure reads
+always result in hits in the buffer cache, POSIX fadvise will be used. To ensure optimal
+layout of files for writing, POSIX fallocate will be used. As an alternative to
+using fadvise, an alternate implementation which uses mmap and madvise instead will
+be compared to the initial implementation.
 
 \section{Key features}
 \subsection{Asynchronous I/O}
@@ -50,6 +54,11 @@ the buffer, and can be resized at a regular interval based on system load.
 Requests for both reads and writes will be made using the POSIX AIO interface
 \cite{manaio}.
 
+\subsection{Multithreading}
+Three alternatives for multithreading will be compared for dcp,
+threaded synchronous I/O, threaded asynchronous I/O, and unthreaded
+asynchronous I/O (\textit{see section 3}).
+
 \subsection{Adaptive buffer sizing}
 As mentioned in the previous section on asynchronous I/O, an adaptive
 sizing of the per-thread buffer will be implemented and evaluated for
@@ -60,23 +69,19 @@ For systems with older and slower disks, as well as directory trees
 with a large number of very small files, having a larger buffer
 will not necessarily positively affect dcp's efficiency.
 
-\subsection{Multithreading}
-Three alternatives for multithreading will be compared for dcp,
-threaded synchronous I/O, threaded asynchronous I/O, and unthreaded
-asynchronous I/O (\textit{see section 3})
-
-\subsection{Fallocate}
-POSIX fallocate will be used to allow the destination filesystem to
-allocate blocks in an efficient way. The use of fallocate is
-fairly straightforward and is expected to increase write speeds
-provided the filesystem on the destination disk intelligently
-allocates blocks.
-
 \subsection{Readahead}
 POSIX fadvise will be used to ensure that pages will be available
 in the buffer cache when read, and that pages will be evicted from
 the cache as soon as possible. Both reads and writes in dcp will
 generally (\textit{see Page Presence Tracking}) be sequential.
+
+\subsection{Mmap and madvise}
+As an alternative to reading files using asynchronous I/O and fadvise,
+mmap and madvise could be used. By using MADV\_SEQUENTIAL when mmapping
+files, mmap's demand paging can be leveraged to quickly sequentially access
+the underlying file. This has the advantage that only one copy of each
+page of the file will be created, but requires awareness of the buffer
+cache replacement policy.
 
 \subsection{Page Presence Tracking}
 In order for dcp to be aware of any pages in the per-thread buffer that
@@ -86,23 +91,49 @@ idea of whether the next sequential page in the buffer is in memory,
 and can make asynchronous IO requests for pages that are in memory
 before page faulting for those pages which were paged out.
 
+\subsection{Fallocate}
+POSIX fallocate will be used to allow the destination filesystem to
+allocate blocks in an efficient way. The use of fallocate is
+fairly straightforward and is expected to increase write speeds
+provided the filesystem on the destination disk intelligently
+allocates blocks.
+
 \section{Benchmarking methodology}
+Dcp will be testable on commonly available computer hardware, and will be tested on
+consumer-grade personal computers. Dcp will be tested on both solid state drives
+and traditional platter based hard drives, with file transfers going from one disk to
+another or one disk to itself, as well as through internal SATA II interfaces and
+external USB3.0 interfaces. The hardware necessary to test dcp will be provided through
+the personal computers of the researchers involved in dcp. The disks used to test dcp
+will be formatted in ext4.
+
+For all hardware configurations, four independent variables will be considered when
+creating benchmarks:
+\begin{itemize}
+    \item File size
+    \item Number of files
+    \item Number of directories
+    \item Depth of directory tree
+\end{itemize}
+
+A simple program will be used to hash the input files, invoke dcp, measure the
+execution time, then verify that all transfers were completed
+successfully by comparing the directory trees and file hashes between
+the source and destination directories.
 
 \section{Timeline}
 This project will follow a weekly timeline. \\
 \begin{tabular}{|l | l|}
 \hline
-10/13 & Start \\
-10/20 & Naive implementation complete \\
-10/27 & MPMC complete \\
-11/03 & readahead complete \\
-11/10 & fallocate complete \\
-11/17 & Testing/optimization \\
+10/20 & Fixed-size/adaptive-size buffer complete \\
+10/27 & fadvise/fallocate complete \\
+11/03 & mmap/madvise complete \\
+11/10 & MPMC complete \\
+11/17 & Testing/debug \\
 11/24 & Benchmarking \\
 12/01 & Complete \\
 \hline
 \end{tabular}
-
 
 \bibliographystyle{plain}
 \bibliography{citations}
