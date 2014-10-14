@@ -36,9 +36,7 @@
 An improved version of 'cp -r' is proposed.
 This version will take advantage of Linux's asynchronous IO interfaces to create
 opportunities for parallelism, and will minimize the time spent blocking on disk
-IO by leveraging fallocate and readahead. Furthermore, to ensure no requests to
-paged out pages in the buffer are blindly initiated, a kernel module to service
-requests from dcp for page table entries is proposed. In order to ensure reads
+IO by leveraging fallocate and readahead. In order to ensure reads
 are more likely to result in hits in the buffer cache when memory is scarce, POSIX
 fadvise will be used. To ensure optimal layout of files for writing, POSIX
 fallocate will be used. As an alternative to using fadvise, an alternate
@@ -103,8 +101,8 @@ Linux readahead and POSIX fadvise provide similar functionality,
 so POSIX fadvise will be used.
 POSIX fadvise will be used to ensure that pages will be available
 in the buffer cache when read, and that pages will be evicted from
-the cache as soon as possible. Both reads and writes in dcp will
-generally (\textit{see Page Presence Tracking}) be sequential.
+the cache as soon as possible. All reads in dcp will
+always be sequential, so FADV\_SEQUENTIAL will be used.
 
 \subsection{Mmap and madvise}
 As an alternative to reading files using asynchronous I/O and fadvise,
@@ -113,14 +111,6 @@ files, mmap's demand paging can be leveraged to quickly sequentially access
 the underlying file. This has the advantage that only one copy of each
 page of the file will be created, but requires awareness of the buffer
 cache replacement policy.
-
-\subsection{Page Presence Tracking}
-In order for dcp to be aware of any pages in the per-thread buffer that
-are paged out, a kernel module to fetch and return page table entries to
-dcp is proposed. Using the page table entries, dcp will have a better
-idea of whether the next sequential page in the buffer is in memory,
-and can make asynchronous IO requests for pages that are in memory
-before page faulting for those pages which were paged out.
 
 \subsection{Fallocate}
 POSIX fallocate will be used to allow the destination filesystem to
