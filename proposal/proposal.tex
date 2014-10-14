@@ -60,21 +60,22 @@ the buffer, and can be resized at a regular interval based on system load.
 Requests for both reads and writes will be made using the POSIX AIO interface
 \cite{manaio}.
 
+Concurrent reads will be accomplished by using 2 MPMC queues,
+used to queue up future directory and file reads.
+One queue will be used for directories and one for files.
+Since the reading of directories is a potential bottleneck, threads
+reading directories will be prioritized over those reading files.
+Since the time taken to read a large file is dominated by
+the sequential read time, as opposed to the seek time overhead
+when reading a small file, small files will be prioritized over
+large files.
+
 \subsection{Multithreading}
 Three alternatives for multithreading will be compared for dcp,
 threaded synchronous I/O, threaded asynchronous I/O, and unthreaded
 asynchronous I/O (\textit{see section 3}). A single program which
 can take explicit parameters to modify the number of threads and
 type of I/O will be implemented to test these.
-
-Multithreading will be accomplished by using 2 MPMC queues,
-one for directories and one for files. Since the reading of
-directories is required to queue work for files, threads
-reading directories will be prioritized over those writing files.
-Since the time taken to read a large file is dominated by
-the sequential read time, as opposed to the seek time overhead
-when reading a small file, small files will be prioritized over
-large files.
 
 The level of concurrency will be dynamically adjusted based
 on the characteristics of the workload and the performance
