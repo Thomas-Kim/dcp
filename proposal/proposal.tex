@@ -45,6 +45,12 @@ using fadvise, an alternate implementation which uses mmap and madvise instead w
 be compared to the initial implementation.
 
 \section{Key features}
+\subsection{General optimizations}
+\begin{itemize}
+    \item Hard links will be detected and the associated inode and file will
+          only be read once.
+    \item st\_atime updates will be suppressed using O\_NOATIME
+\end{itemize}
 \subsection{Asynchronous I/O}
 Dcp will use asynchronous I/O to populate a per-thread in-memory buffer.
 Both fixed-size and adaptive-sized buffers will be tested.
@@ -57,7 +63,22 @@ Requests for both reads and writes will be made using the POSIX AIO interface
 \subsection{Multithreading}
 Three alternatives for multithreading will be compared for dcp,
 threaded synchronous I/O, threaded asynchronous I/O, and unthreaded
-asynchronous I/O (\textit{see section 3}).
+asynchronous I/O (\textit{see section 3}). A single program which
+can take explicit parameters to modify the number of threads and
+type of I/O will be implemented to test these.
+
+Multithreading will be accomplished by using 2 MPMC queues,
+one for directories and one for files. Since the reading of
+directories is required to queue work for files, threads
+reading directories will be prioritized over those writing files.
+Since the time taken to read a large file is dominated by
+the sequential read time, as opposed to the seek time overhead
+when reading a small file, small files will be prioritized over
+large files.
+
+The level of concurrency will be dynamically adjusted based
+on the characteristics of the workload and the performance
+of dcp during execution.
 
 \subsection{Adaptive buffer sizing}
 As mentioned in the previous section on asynchronous I/O, an adaptive
