@@ -1,1 +1,2 @@
-void file(char* path);
+#include <sys/stat.h>
+void file(char* path, struct stat* info);

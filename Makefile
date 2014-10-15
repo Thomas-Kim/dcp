@@ -7,7 +7,7 @@ LINK=-lstdc++
 MKDIRS=lib bin tst/bin .pass .pass/tst/bin
 INCLUDE=$(addprefix -I,include)
 EXECS=$(addprefix bin/,dcp)
-TESTS=$(addprefix tst/bin,)
+TESTS=$(addprefix tst/bin/,todo)
 PAPERS=proposal/proposal.pdf
 .PHONY: default all clean again check papers
 .SECONDARY:
@@ -21,8 +21,8 @@ check: $(addprefix .pass/,$(TESTS))
 	@printf "$<: "
 	@$<\
 		&& echo -e "\033[0;32mpass\033[0m" && touch $@\
-		|| echo -e "\033[0;32mfail\033[0m"
-bin/dcp: lib/todo.o
+		|| echo -e "\033[0;31mfail\033[0m"
+bin/dcp: lib/todo.o lib/directory.o lib/file.o
 papers: $(PAPERS)
 $(MKDIRS):
 	@mkdir -p $@

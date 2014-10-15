@@ -1,4 +1,4 @@
 #include "directory.h"
-void directory(char* path) {
 
+void directory(char* path) {
 }
