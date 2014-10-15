@@ -9,7 +9,7 @@ INCLUDE=$(addprefix -I,include)
 EXECS=$(addprefix bin/,dcp)
 TESTS=$(addprefix tst/bin/,todo)
 PAPERS=proposal/proposal.pdf
-.PHONY: default all clean again check papers
+.PHONY: default all clean again check papers distcheck dist-check
 .SECONDARY:
 default: all
 all: $(EXECS) $(TESTS)
@@ -17,6 +17,9 @@ clean:
 	rm -rf $(MKDIRS) $(PAPERS)
 again: clean all
 check: $(addprefix .pass/,$(TESTS))
+dist-check distcheck:
+	@rm -rf .pass
+	@make --no-print-directory check
 .pass/tst/bin/%: tst/bin/% | .pass/tst/bin
 	@printf "$<: "
 	@$<\
