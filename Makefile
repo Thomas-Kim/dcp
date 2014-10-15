@@ -3,6 +3,7 @@ CC=gcc
 CPP=g++
 CFLAGS=-O3 -fdiagnostics-color=auto -pthread -std=gnu11
 CPPFLAGS=$(filter-out -std=gnu11, $(CFLAGS)) -std=gnu++11 -fno-exceptions -Wno-write-strings
+LINK=-lstdc++
 MKDIRS=lib bin tst/bin .pass .pass/tst/bin
 INCLUDE=$(addprefix -I,include)
 EXECS=$(addprefix bin/,dcp)
@@ -21,20 +22,21 @@ check: $(addprefix .pass/,$(TESTS))
 	@$<\
 		&& echo -e "\033[0;32mpass\033[0m" && touch $@\
 		|| echo -e "\033[0;32mfail\033[0m"
+bin/dcp: lib/todo.o
 papers: $(PAPERS)
 $(MKDIRS):
 	@mkdir -p $@
 bin/%: %.cpp | bin
-	$(CPP) $(CPPFLAGS) $(INCLUDE) $< -o $@
+	$(CPP) $(CPPFLAGS) $(INCLUDE) $^ -o $@ $(LINK)
 bin/%: %.c | bin
-	$(CC) $(CFLAGS) $(INCLUDE) $< -o $@
+	$(CC) $(CFLAGS) $(INCLUDE) $^ -o $@ $(LINK)
 lib/%.o: src/%.cpp include/%.h | lib
 	$(CPP) -c $(CPPFLAGS) $(INCLUDE) $< -o $@
 lib/%.o: src/%.c include/%.h | lib
 	$(CC) -c $(CFLAGS) $(INCLUDE) $< -o $@
 tst/bin/%: tst/%.cpp lib/%.o | tst/bin
-	$(CPP) $(CPPFLAGS) $(INCLUDE) $^ -o $@
+	$(CPP) $(CPPFLAGS) $(INCLUDE) $^ -o $@ $(LINK)
 tst/bin/%: tst/%.c lib/%.o | tst/bin
-	$(CC) $(CFLAGS) $(INCLUDE) $^ -o $@
+	$(CC) $(CFLAGS) $(INCLUDE) $^ -o $@ $(LINK)
 %.pdf: %.tex
 	pdflatex -output-directory $(@D) $<
