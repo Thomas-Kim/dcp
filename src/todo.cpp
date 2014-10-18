@@ -6,10 +6,14 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-
+#include <fcntl.h>
 
 #include <queue>
 using std::priority_queue;
+
+#include "file.h"
+
+const size_t buf_size = 0x400; // Buffer size for paths
 
 struct todo {
     struct stat info;
@@ -22,6 +26,8 @@ struct todo {
 
 static priority_queue<todo> files;
 static priority_queue<todo> directories;
+static char dst_root[buf_size];
+static char src_root[buf_size];
 
 char* get_next(struct stat* info) {
     struct todo ret;
@@ -71,4 +77,23 @@ void add_path(char* path) {
         fprintf(stderr, "Dunno what to do with %s\n", path);
     }
 }
+void get_dst_path(const char* path, char* buff) {
+    strcpy(buff, dst_root); 
+    strcpy(&buff[strlen(dst_root)], &(path[strlen(src_root) - 1]));
+}
+void do_file() {
+    struct stat info;
+    char* src_path = get_next(&info);
 
+    char dst_path[buf_size];
+    get_dst_path(src_path, dst_path);
+    // Open the file using file(2) from file.h
+    file(src_path, &info);
+    // TODO Does this functionality go in file(2) or here?
+}
+void set_src_root(const char* root) {
+    strcpy(src_root, root);
+}
+void set_dst_root(const char* root) {
+    strcpy(dst_root, root);
+}
