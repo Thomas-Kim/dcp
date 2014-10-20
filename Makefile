@@ -1,13 +1,13 @@
 SHELL=/bin/bash
 CC=gcc
 CPP=g++
-CFLAGS=-O3 -fdiagnostics-color=auto -pthread -std=gnu11
+CFLAGS=-O3 -fdiagnostics-color=auto -pthread -std=gnu11 -g
 CPPFLAGS=$(filter-out -std=gnu11, $(CFLAGS)) -std=gnu++11 -fno-exceptions -Wno-write-strings
 LINK=-lstdc++
 MKDIRS=lib bin tst/bin .pass .pass/tst/bin
 INCLUDE=$(addprefix -I,include)
 EXECS=$(addprefix bin/,dcp)
-TESTS=$(addprefix tst/bin/,todo equals)
+TESTS=$(addprefix tst/bin/,todo equals benchmarks)
 PAPERS=proposal/proposal.pdf
 .PHONY: default all clean again check papers distcheck dist-check
 .SECONDARY:
@@ -20,6 +20,7 @@ check: $(addprefix .pass/,$(TESTS))
 dist-check distcheck:
 	@rm -rf .pass
 	@make --no-print-directory check
+.pass/tst/bin/benchmarks: bin/dcp
 .pass/tst/bin/%: tst/bin/% | .pass/tst/bin
 	@printf "$<: "
 	@$<\

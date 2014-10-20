@@ -5,3 +5,5 @@ lib/
 *.pdf
 *.aux
 *.log
+tst/tmpsrc
+tst/tmpdst

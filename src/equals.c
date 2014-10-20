@@ -9,7 +9,7 @@
 #include <strings.h>
 
 const size_t buf_size = 1000;
-void assertFilesEqual(const char* one, const char* two) {
+int filesEqual(const char* one, const char* two) {
     FILE* f1 = fopen(one, "r");
     if (f1 == NULL) {
         perror(one);
@@ -30,15 +30,20 @@ void assertFilesEqual(const char* one, const char* two) {
     do {
         r1 = fread(buff1, 1, buf_size, f1);
         r2 = fread(buff2, 1, buf_size, f2);
-        assert(r1 == r2);
-        assert(bcmp(buff1, buff2, r1) == 0);
+        if (r1 != r2) {
+            return false;
+        }
+        if (bcmp(buff1, buff2, r1) != 0) {
+            return false;
+        }
     } while (r1 & r2);
     free(buff1);
     free(buff2);
     fclose(f1);
     fclose(f2);
+    return true;
 }
-void assertDirsEqual(const char* one, const char* two) {
+int dirsEqual(const char* one, const char* two) {
     DIR* d1 = opendir(one);
     if (d1 == NULL) {
         perror(one);
@@ -54,9 +59,20 @@ void assertDirsEqual(const char* one, const char* two) {
         e1 = readdir(d1);
         e2 = readdir(d2);
         // FIXME file order varies
-        assert(strcmp(e1->d_name, e2->d_name) == 0);
+        if (strcmp(e1->d_name, e2->d_name) != 0) {
+            return 0;
+        }
     } while (e1 && e2);
-    assert(!e1 && !e2);
+    if (e1 || e2) {
+        return false;
+    }
     closedir(d1);
     closedir(d2);
+    return true;
+}
+void assertDirsEqual(const char* one, const char* two) {
+    assert(dirsEqual(one, two));
+}
+void assertFilesEqual(const char* one, const char* two) {
+    assert(filesEqual(one, two));
 }
