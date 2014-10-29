@@ -78,7 +78,7 @@ void add_path(const char* path) {
     }
 }
 void get_dst_path(const char* path, char* buff) {
-    strcpy(buff, dst_root); 
+    strcpy(buff, dst_root);
     strcpy(&buff[strlen(dst_root)], &(path[strlen(src_root) - 1]));
 }
 void do_file() {
