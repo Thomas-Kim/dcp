@@ -20,13 +20,14 @@ check: $(addprefix .pass/,$(TESTS))
 dist-check distcheck:
 	@rm -rf .pass
 	@make --no-print-directory check
-.pass/tst/bin/benchmarks: bin/dcp
 .pass/tst/bin/%: tst/bin/% | .pass/tst/bin
 	@printf "$<: "
 	@$<\
 		&& echo -e "\033[0;32mpass\033[0m" && touch $@\
 		|| echo -e "\033[0;31mfail\033[0m"
+.pass/tst/bin/benchmarks: bin/dcp
 bin/dcp: lib/todo.o lib/directory.o lib/file.o
+tst/bin/todo: lib/file.o
 papers: $(PAPERS)
 $(MKDIRS):
 	@mkdir -p $@
