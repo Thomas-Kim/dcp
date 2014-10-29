@@ -22,7 +22,7 @@ struct job {
     struct aiocb* j_aiocb;
 };
 
-struct job* file(char* path, struct stat* info) {
+struct job* file(const char* path, struct stat* info) {
     int fd = open(path, O_NOATIME | O_NONBLOCK);
     if (fd == -1) {
         perror("path");
