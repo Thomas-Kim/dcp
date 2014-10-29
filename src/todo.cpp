@@ -1,4 +1,5 @@
 #include "todo.h"
+#include "file.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -10,8 +11,6 @@
 
 #include <queue>
 using std::priority_queue;
-
-#include "file.h"
 
 const size_t buf_size = 0x400; // Buffer size for paths
 
