@@ -25,9 +25,16 @@ int job_schedule_write(struct job* aio_job);
 #ifdef __cplusplus
 extern "C"
 #endif
-int aio_sigread_handler(int signo, siginfo_t* si, void* ucontext);
+int register_signal_handlers(void);
+
+/*
+#ifdef __cplusplus
+extern "C"
+#endif
+void aio_sigread_handler(int signo, siginfo_t* si, void* ucontext);
 
 #ifdef __cplusplus
 extern "C"
 #endif
-int aio_sigwrite_handler(int signo, siginfo_t* si, void* ucontext);
+void aio_sigwrite_handler(int signo, siginfo_t* si, void* ucontext);
+*/
