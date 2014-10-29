@@ -63,6 +63,8 @@ Concurrent reads will be accomplished by using 2 MPMC queues.
 One queue will be used for directories and one for files.
 Since the reading of directories is a potential bottleneck, threads
 reading directories will be prioritized over those reading files.
+One possible optimization which will be explored is to batch the
+creation of all directories at the beginning of the copy operation.
 Dcp will explore prioritizing reads based on file size.
 Prioritization of large files has the advantage that starting
 longer jobs first will allow for dcp to finish executing sooner
@@ -150,10 +152,8 @@ the source and destination directories.
 This project will follow a weekly timeline. \\
 \begin{tabular}{|l | l|}
 \hline
-10/20 & Fixed-size/adaptive-size buffer complete \\
-10/27 & fadvise/fallocate complete \\
 11/03 & mmap/madvise complete \\
-11/10 & MPMC complete \\
+11/10 & MPMC + adaptive size buffer complete \\
 11/17 & Testing/debug \\
 11/24 & Benchmarking \\
 12/01 & Complete \\
