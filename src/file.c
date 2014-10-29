@@ -12,7 +12,8 @@
 #include <stdio.h>
 
 #define BUF_SIZE (0x1000 * 20)
-#define AIO_SIG SIGUSR1
+#define AIO_SIGREAD SIGUSR1
+#define AIO_SIGWRITE SIGUSR2
 
 struct job* file(char* path, struct stat* info) {
     int fd = open(path, O_NOATIME | O_NONBLOCK);
@@ -38,12 +39,12 @@ struct job* file(char* path, struct stat* info) {
         perror("malloc");
         goto cleanup;
     }
+    cb->aio_buf = malloc(BUF_SIZE);
     cb->aio_nbytes = BUF_SIZE;
     cb->aio_reqprio = 0;
     cb->aio_offset = 0;
     /* Single-threaded approach -> signals */
     cb->aio_sigevent.sigev_notify = SIGEV_SIGNAL;
-    cb->aio_sigevent.sigev_signo = AIO_SIG;
     cb->aio_sigevent.sigev_value.sival_ptr = aio_job;
 
     aio_job->j_aiocb = cb;
@@ -57,4 +58,16 @@ cleanup:
         free(aio_job);
     close(fd);
     return NULL;
+}
+
+int job_schedule_read(struct job* aio_job) {
+    aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGREAD;
+    int ret = aio_read(aio_job->j_aiocb);
+    return ret;
+}
+
+int job_schedule_write(struct job* aio_job) {
+    aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGWRITE;
+    int ret = aio_write(aio_job->j_aiocb);
+    return ret;
 }
