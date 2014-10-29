@@ -3,7 +3,7 @@ CC=gcc
 CPP=g++
 CFLAGS=-O3 -fdiagnostics-color=auto -pthread -std=gnu11 -g
 CPPFLAGS=$(filter-out -std=gnu11, $(CFLAGS)) -std=gnu++11 -fno-exceptions -Wno-write-strings
-LINK=-lstdc++
+LINK=-lstdc++ -lrt
 MKDIRS=lib bin tst/bin .pass .pass/tst/bin
 INCLUDE=$(addprefix -I,include)
 EXECS=$(addprefix bin/,dcp)
