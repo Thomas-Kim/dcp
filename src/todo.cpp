@@ -25,8 +25,6 @@ struct todo {
 
 static priority_queue<todo> files;
 static priority_queue<todo> directories;
-static char dst_root[buf_size];
-static char src_root[buf_size];
 
 const char* get_next(struct stat* info) {
     struct todo ret;
@@ -76,30 +74,4 @@ void add_path(const char* path) {
         fprintf(stderr, "Dunno what to do with %s\n", path);
     }
 }
-void get_dst_path(const char* path, char* buff) {
-    strcpy(buff, dst_root);
-    strcpy(&buff[strlen(dst_root)], &(path[strlen(src_root) - 1]));
-}
-#if 0
-void do_file() {
-    struct stat info;
-    const char* src_path = get_next(&info);
 
-    char dst_path[buf_size];
-    get_dst_path(src_path, dst_path);
-    // Open the file using file(2) from file.h
-    struct job* aio_job = file(src_path, &info);
-    /* Start the job using AIO interface */
-    // Any extra calculations / queueing can go here
-
-    /* Schedule the actual job, which will
-     * callback aio_sigread_handler upon completion */
-    job_schedule_read(aio_job);
-}
-#endif
-void set_src_root(const char* root) {
-    strcpy(src_root, root);
-}
-void set_dst_root(const char* root) {
-    strcpy(dst_root, root);
-}

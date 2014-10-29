@@ -1,4 +1,5 @@
 #include "todo.h"
+#include "file.h"
 
 #include <stdio.h>
 static const char* USAGE ="\
@@ -14,5 +15,6 @@ int main(int argc, char* argv[]) {
     set_src_root(src);
     set_dst_root(dst);
     add_path(src);
+    register_signal_handlers();
     return 0;
 }

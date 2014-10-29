@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <aio.h>
+#include <string.h>
 #define flock _flock
 #include <linux/fcntl.h>
 #undef flock
@@ -14,16 +15,21 @@
 #include <assert.h>
 
 #define BUF_SIZE (0x1000 * 20)
+#define STRBUF_SIZE 0x400
 #define AIO_SIGREAD SIGUSR1
 #define AIO_SIGWRITE SIGUSR2
 
+static char dst_root[STRBUF_SIZE];
+static char src_root[STRBUF_SIZE];
+
 struct job {
     size_t j_filesz;
+    int src_fd, dst_fd;
     struct aiocb* j_aiocb;
 };
 
 struct job* file(const char* path, struct stat* info) {
-    int fd = open(path, O_NOATIME | O_NONBLOCK);
+    int fd = open(path, O_NOATIME | O_NONBLOCK | O_RDONLY);
     if (fd == -1) {
         perror("path");
         return NULL;
@@ -32,7 +38,14 @@ struct job* file(const char* path, struct stat* info) {
     if (error = posix_fadvise(fd, 0, info->st_size, POSIX_FADV_SEQUENTIAL)) {
         errno = error;
         perror("posix_fadvise");
-        return NULL;
+        goto abort;
+    }
+    char buf[STRBUF_SIZE];
+    get_dst_path(path, buf);
+    int dfd = open(buf, O_NOATIME | O_NONBLOCK | O_WRONLY | O_CREAT, info->st_mode);
+    if(dfd == -1) {
+        perror("dst_path");
+        goto abort;
     }
     /* Allocate the aio control block */
     struct aiocb* cb = malloc(sizeof(struct aiocb));
@@ -57,6 +70,8 @@ struct job* file(const char* path, struct stat* info) {
 
     aio_job->j_aiocb = cb;
     aio_job->j_filesz = info->st_size;
+    aio_job->src_fd = fd;
+    aio_job->dst_fd = dfd;
 
     return aio_job;
 abort:
@@ -69,14 +84,30 @@ abort:
 }
 
 int job_schedule_read(struct job* aio_job) {
+    printf("Hi\n");
     aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGREAD;
+    aio_job->j_aiocb->aio_fildes = aio_job->src_fd;
+    // TODO calculate size
+    aio_job->j_aiocb->aio_nbytes = aio_job->j_filesz < BUF_SIZE ? aio_job->j_filesz : BUF_SIZE;
     int ret = aio_read(aio_job->j_aiocb);
+    if(ret == -1)
+        perror("aio_read");
+    // TODO
+    sleep(1);
     return ret;
 }
 
 int job_schedule_write(struct job* aio_job) {
+    printf("Hi\n");
     aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGWRITE;
+    aio_job->j_aiocb->aio_fildes = aio_job->dst_fd;
+    // TODO calculate size
+    aio_job->j_aiocb->aio_nbytes = aio_job->j_filesz < BUF_SIZE ? aio_job->j_filesz : BUF_SIZE;
     int ret = aio_write(aio_job->j_aiocb);
+    if(ret == -1)
+        perror("aio_read");
+    // TODO Need to implement a way to wait until jobs are done
+    sleep(1);
     return ret;
 }
 
@@ -88,7 +119,8 @@ static void aio_sigread_handler(int signo, siginfo_t* si, void* ucontext) {
 static void aio_sigwrite_handler(int signo, siginfo_t* si, void* ucontext) {
     struct job* aio_job = si->si_value.sival_ptr;
     aio_job->j_aiocb->aio_offset += BUF_SIZE;
-    job_schedule_read(aio_job);
+    if(aio_job->j_aiocb->aio_offset < aio_job->j_filesz)
+        job_schedule_read(aio_job);
 }
 
 int register_signal_handlers(void) {
@@ -97,7 +129,24 @@ int register_signal_handlers(void) {
     write_action.sa_flags = SA_SIGINFO;
     read_action.sa_sigaction = aio_sigread_handler;
     read_action.sa_flags = SA_SIGINFO;
-    sigaction(AIO_SIGWRITE, &write_action, NULL);
-    sigaction(AIO_SIGREAD, &read_action, NULL);
+    int ret = sigaction(AIO_SIGWRITE, &write_action, NULL);
+    if(ret < 0)
+        perror("sigaction");
+    ret = sigaction(AIO_SIGREAD, &read_action, NULL);
+    if(ret < 0)
+        perror("sigaction");
     return 0;
+}
+
+void get_dst_path(const char* path, char* buff) {
+    strcpy(buff, dst_root);
+    strcpy(&buff[strlen(dst_root)], &(path[strlen(src_root)]));
+}
+
+void set_src_root(const char* root) {
+    strcpy(src_root, root);
+}
+
+void set_dst_root(const char* root) {
+    strcpy(dst_root, root);
 }

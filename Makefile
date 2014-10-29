@@ -7,7 +7,7 @@ LINK=-lstdc++ -lrt
 MKDIRS=lib bin tst/bin .pass .pass/tst/bin
 INCLUDE=$(addprefix -I,include)
 EXECS=$(addprefix bin/,dcp)
-TESTS=$(addprefix tst/bin/,todo equals benchmarks)
+TESTS=$(addprefix tst/bin/,todo equals benchmarks file)
 PAPERS=proposal/proposal.pdf
 .PHONY: default all clean again check papers distcheck dist-check
 .SECONDARY:
@@ -27,7 +27,6 @@ dist-check distcheck:
 		|| echo -e "\033[0;31mfail\033[0m"
 .pass/tst/bin/benchmarks: bin/dcp
 bin/dcp: lib/todo.o lib/directory.o lib/file.o
-tst/bin/todo: lib/file.o
 papers: $(PAPERS)
 $(MKDIRS):
 	@mkdir -p $@
