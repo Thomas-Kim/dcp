@@ -80,6 +80,7 @@ void get_dst_path(const char* path, char* buff) {
     strcpy(buff, dst_root);
     strcpy(&buff[strlen(dst_root)], &(path[strlen(src_root) - 1]));
 }
+#if 0
 void do_file() {
     struct stat info;
     const char* src_path = get_next(&info);
@@ -95,6 +96,7 @@ void do_file() {
      * callback aio_sigread_handler upon completion */
     job_schedule_read(aio_job);
 }
+#endif
 void set_src_root(const char* root) {
     strcpy(src_root, root);
 }

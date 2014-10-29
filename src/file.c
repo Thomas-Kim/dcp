@@ -17,7 +17,12 @@
 #define AIO_SIGREAD SIGUSR1
 #define AIO_SIGWRITE SIGUSR2
 
-struct job* file(const char* path, struct stat* info) {
+struct job {
+    size_t j_filesz;
+    struct aiocb* j_aiocb;
+};
+
+struct job* file(char* path, struct stat* info) {
     int fd = open(path, O_NOATIME | O_NONBLOCK);
     if (fd == -1) {
         perror("path");
@@ -77,12 +82,13 @@ int job_schedule_write(struct job* aio_job) {
 
 static void aio_sigread_handler(int signo, siginfo_t* si, void* ucontext) {
     struct job* aio_job = si->si_value.sival_ptr;
-    assert("aio_sigread_handler NOT IMPLEMENTED" == NULL);
+    job_schedule_write(aio_job);
 }
 
 static void aio_sigwrite_handler(int signo, siginfo_t* si, void* ucontext) {
     struct job* aio_job = si->si_value.sival_ptr;
-    assert("aio_sigwrite_handler NOT IMPLEMENTED" == NULL);
+    aio_job->j_aiocb->aio_offset += BUF_SIZE;
+    job_schedule_read(aio_job);
 }
 
 int register_signal_handlers(void) {

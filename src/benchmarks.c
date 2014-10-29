@@ -75,7 +75,7 @@ void setup(const char* benchmark_file, const char* target) {
     uint32_t depth, width, files, file_size;
     int scanned = fscanf(f, "%u %u %u %u", &depth, &width, &files, &file_size);
     if (scanned == EOF) {
-        printf(strerror(errno));;
+        printf("%s", strerror(errno));;
         goto close;
     }
     if (scanned < 4) {
@@ -97,7 +97,11 @@ void setup(const char* benchmark_file, const char* target) {
         perror("cwd");
     }
     make_level(target, depth, width, files, file_size);
-    chdir(cwd);
+    int ret = chdir(cwd);
+    if(ret == -1) {
+        perror("chdir");
+        goto close;
+    }
 
     close:
     fclose(f);
