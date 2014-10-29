@@ -9,8 +9,10 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "%s", USAGE);
         return -1;
     }
-    char* src = argv[1];
-    char* dst = argv[2];
+    const char* src = argv[1];
+    const char* dst = argv[2];
+    set_src_root(src);
+    set_dst_root(dst);
     add_path(src);
     return 0;
 }

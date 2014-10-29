@@ -5,13 +5,13 @@
 #ifdef __cplusplus
 extern "C"
 #endif
-char* get_next(struct stat* info);
+const char* get_next(struct stat* info);
 
 // add work todo
 #ifdef __cplusplus
 extern "C"
 #endif
-void add_path(char* p);
+void add_path(const char* p);
 
 // Pop the next job off the file queue and execute it
 #ifdef __cplusplus

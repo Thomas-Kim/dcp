@@ -9,4 +9,4 @@ struct job {
 #ifdef __cplusplus
 extern "C"
 #endif
-struct job* file(char* path, struct stat* info);
+struct job* file(const char* path, struct stat* info);

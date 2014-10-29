@@ -31,7 +31,7 @@ int main() {
         }
     } while(ent);
     set<string> popped;
-    char* pop;
+    const char* pop;
     do {
         struct stat info;
         pop = get_next(&info);

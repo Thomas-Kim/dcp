@@ -14,29 +14,29 @@
 #define BUF_SIZE (0x1000 * 20)
 #define AIO_SIG SIGUSR1
 
-struct job* file(char* path, struct stat* info) {
+struct job* file(const char* path, struct stat* info) {
     int fd = open(path, O_NOATIME | O_NONBLOCK);
     if (fd == -1) {
         perror("path");
-        goto cleanup;
+        return NULL;
     }
     int error;
     if (error = posix_fadvise(fd, 0, info->st_size, POSIX_FADV_SEQUENTIAL)) {
         errno = error;
         perror("posix_fadvise");
-        goto cleanup;
+        return NULL;
     }
     /* Allocate the aio control block */
     struct aiocb* cb = malloc(sizeof(struct aiocb));
     /* Check the return value of malloc, in order to retain points */
     if(cb == NULL) {
         perror("malloc");
-        goto cleanup;
+        goto abort;
     }
     struct job *aio_job = malloc(sizeof(struct job));
     if(aio_job == NULL) {
         perror("malloc");
-        goto cleanup;
+        goto abort;
     }
     cb->aio_nbytes = BUF_SIZE;
     cb->aio_reqprio = 0;
@@ -50,11 +50,11 @@ struct job* file(char* path, struct stat* info) {
     aio_job->j_filesz = info->st_size;
 
     return aio_job;
-cleanup:
-    if(cb != NULL)
-        free(cb);
+abort:
     if(aio_job != NULL)
         free(aio_job);
+    if(cb != NULL)
+        free(cb);
     close(fd);
     return NULL;
 }

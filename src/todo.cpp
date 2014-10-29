@@ -17,7 +17,7 @@ const size_t buf_size = 0x400; // Buffer size for paths
 
 struct todo {
     struct stat info;
-    char* path;
+    const char* path;
     // how to order items
     bool operator < (const todo& other) const {
         return info.st_size > other.info.st_size;
@@ -29,7 +29,7 @@ static priority_queue<todo> directories;
 static char dst_root[buf_size];
 static char src_root[buf_size];
 
-char* get_next(struct stat* info) {
+const char* get_next(struct stat* info) {
     struct todo ret;
     if (!files.empty()) {
         ret = files.top();
@@ -46,19 +46,19 @@ char* get_next(struct stat* info) {
     return ret.path;
 }
 
-void add_file(char* path, struct stat* info) {
+void add_file(const char* path, struct stat* info) {
     struct todo put;
     memcpy(&put.info, info, sizeof(*info));
     put.path = path;
     files.push(put);
 }
-void add_dir(char* path, struct stat* info) {
+void add_dir(const char* path, struct stat* info) {
     struct todo put;
     memcpy(&put.info, info, sizeof(*info));
     put.path = path;
     directories.push(put);
 }
-void add_path(char* path) {
+void add_path(const char* path) {
     struct stat info;
     if (stat(path, &info)) {
         perror(path);
@@ -83,7 +83,7 @@ void get_dst_path(const char* path, char* buff) {
 }
 void do_file() {
     struct stat info;
-    char* src_path = get_next(&info);
+    const char* src_path = get_next(&info);
 
     char dst_path[buf_size];
     get_dst_path(src_path, dst_path);
