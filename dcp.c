@@ -6,7 +6,7 @@ usage: dcp SRC DST\n\
 ";
 int main(int argc, char* argv[]) {
     if (argc != 3) {
-        fprintf(stderr, USAGE);
+        fprintf(stderr, "%s", USAGE);
         return -1;
     }
     char* src = argv[1];

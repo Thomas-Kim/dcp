@@ -30,4 +30,3 @@ void set_src_root(const char * root);
 extern "C"
 #endif
 void set_dst_root(const char * root);
-

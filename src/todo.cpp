@@ -88,8 +88,8 @@ void do_file() {
     char dst_path[buf_size];
     get_dst_path(src_path, dst_path);
     // Open the file using file(2) from file.h
-    //file(src_path, &info);
-    // TODO Does this functionality go in file(2) or here?
+    struct job* aio_job = file(src_path, &info);
+    /* Start the job using AIO interface */
 }
 void set_src_root(const char* root) {
     strcpy(src_root, root);
