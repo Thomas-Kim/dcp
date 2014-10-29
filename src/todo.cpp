@@ -89,6 +89,11 @@ void do_file() {
     // Open the file using file(2) from file.h
     struct job* aio_job = file(src_path, &info);
     /* Start the job using AIO interface */
+    // Any extra calculations / queueing can go here
+
+    /* Schedule the actual job, which will
+     * callback aio_sigread_handler upon completion */
+    job_schedule_read(aio_job);
 }
 void set_src_root(const char* root) {
     strcpy(src_root, root);

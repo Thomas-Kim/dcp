@@ -11,6 +11,8 @@
 #undef flock
 #include <stdio.h>
 
+#include <assert.h>
+
 #define BUF_SIZE (0x1000 * 20)
 #define AIO_SIGREAD SIGUSR1
 #define AIO_SIGWRITE SIGUSR2
@@ -75,10 +77,12 @@ int job_schedule_write(struct job* aio_job) {
 
 static void aio_sigread_handler(int signo, siginfo_t* si, void* ucontext) {
     struct job* aio_job = si->si_value.sival_ptr;
+    assert("aio_sigread_handler NOT IMPLEMENTED" == NULL);
 }
 
 static void aio_sigwrite_handler(int signo, siginfo_t* si, void* ucontext) {
     struct job* aio_job = si->si_value.sival_ptr;
+    assert("aio_sigwrite_handler NOT IMPLEMENTED" == NULL);
 }
 
 int register_signal_handlers(void) {
