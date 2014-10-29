@@ -43,6 +43,7 @@ struct job* file(const char* path, struct stat* info) {
     cb->aio_nbytes = BUF_SIZE;
     cb->aio_reqprio = 0;
     cb->aio_offset = 0;
+    cb->aio_fildes = fd;
     /* Single-threaded approach -> signals */
     cb->aio_sigevent.sigev_notify = SIGEV_SIGNAL;
     cb->aio_sigevent.sigev_value.sival_ptr = aio_job;
@@ -70,4 +71,23 @@ int job_schedule_write(struct job* aio_job) {
     aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGWRITE;
     int ret = aio_write(aio_job->j_aiocb);
     return ret;
+}
+
+static void aio_sigread_handler(int signo, siginfo_t* si, void* ucontext) {
+    struct job* aio_job = si->si_value.sival_ptr;
+}
+
+static void aio_sigwrite_handler(int signo, siginfo_t* si, void* ucontext) {
+    struct job* aio_job = si->si_value.sival_ptr;
+}
+
+int register_signal_handlers(void) {
+    struct sigaction write_action, read_action;
+    write_action.sa_sigaction = aio_sigwrite_handler;
+    write_action.sa_flags = SA_SIGINFO;
+    read_action.sa_sigaction = aio_sigread_handler;
+    read_action.sa_flags = SA_SIGINFO;
+    sigaction(AIO_SIGWRITE, &write_action, NULL);
+    sigaction(AIO_SIGREAD, &read_action, NULL);
+    return 0;
 }
