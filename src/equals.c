@@ -56,11 +56,22 @@ int dirsEqual(const char* one, const char* two) {
     }
     struct dirent *e1, *e2;
     do {
+        errno = 0;
         e1 = readdir(d1);
+        if (e1 == NULL && errno) {
+            perror(one);
+            exit(errno);
+        }
         e2 = readdir(d2);
-        // FIXME file order varies
-        if (strcmp(e1->d_name, e2->d_name) != 0) {
-            return 0;
+        if (e2 == NULL && errno) {
+            perror(two);
+            exit(errno);
+        }
+        if (e1 && e2) {
+            // FIXME file order varies
+            if (strcmp(e1->d_name, e2->d_name) != 0) {
+                return 0;
+            }
         }
     } while (e1 && e2);
     if (e1 || e2) {
