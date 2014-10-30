@@ -78,7 +78,7 @@ abort:
 }
 
 int job_schedule_read(struct job* aio_job) {
-    printf("read\n");
+    //printf("read\n");
     aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGREAD;
     aio_job->j_aiocb->aio_fildes = aio_job->src_fd;
     // TODO calculate size
@@ -90,7 +90,7 @@ int job_schedule_read(struct job* aio_job) {
 }
 
 int job_schedule_write(struct job* aio_job) {
-    printf("write\n");
+    //printf("write\n");
     aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGWRITE;
     aio_job->j_aiocb->aio_fildes = aio_job->dst_fd;
     // TODO calculate size

@@ -1,8 +1,10 @@
 #include "file.h"
 
 #include <assert.h>
+#include <errno.h>
 #include <sched.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -12,7 +14,10 @@ int main() {
     set_dst_root("tst/tmpdst");
     
     struct stat info;
-    lstat("tst/tmpsrc/0", &info);
+    if (lstat("tst/tmpsrc/0", &info) == -1) {
+        perror("tst/tmpsrc/0");
+        exit(errno);
+    }
     struct job* aio_job = file("tst/tmpsrc/0", &info);
 
     /* This should schedule a read, which
@@ -24,8 +29,10 @@ int main() {
         if (aio_job->dst_fd) {
             sched_yield();
         } else {
-            exit(0);
+            break;
         }
     }
+    // ensure files equal using diff
+    assert(WEXITSTATUS(system("diff tst/tmpsrc/0 tst/tmpdst/0")) == 0);
     return 0;
 }
