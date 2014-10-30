@@ -124,8 +124,12 @@ static void aio_sigwrite_handler(int signo, siginfo_t* si, void* ucontext) {
 int register_signal_handlers(void) {
     struct sigaction write_action, read_action;
     write_action.sa_sigaction = aio_sigwrite_handler;
+    sigemptyset(&write_action.sa_mask);
+    sigaddset(&write_action.sa_mask, AIO_SIGWRITE);
     write_action.sa_flags = SA_SIGINFO;
     read_action.sa_sigaction = aio_sigread_handler;
+    sigemptyset(&read_action.sa_mask);
+    sigaddset(&read_action.sa_mask, AIO_SIGREAD);
     read_action.sa_flags = SA_SIGINFO;
     int ret = sigaction(AIO_SIGWRITE, &write_action, NULL);
     if(ret < 0)
