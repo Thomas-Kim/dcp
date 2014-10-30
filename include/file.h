@@ -3,6 +3,12 @@
 
 #include <sys/types.h>
 
+struct job {
+    size_t j_filesz;
+    int src_fd, dst_fd;
+    struct aiocb* j_aiocb;
+};
+
 #ifdef __cplusplus
 extern "C"
 #endif

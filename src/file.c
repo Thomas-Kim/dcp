@@ -22,12 +22,6 @@
 static char dst_root[STRBUF_SIZE];
 static char src_root[STRBUF_SIZE];
 
-struct job {
-    size_t j_filesz;
-    int src_fd, dst_fd;
-    struct aiocb* j_aiocb;
-};
-
 struct job* file(const char* path, struct stat* info) {
     int fd = open(path, O_NOATIME | O_NONBLOCK | O_RDONLY);
     if (fd == -1) {
@@ -44,7 +38,7 @@ struct job* file(const char* path, struct stat* info) {
     get_dst_path(path, buf);
     int dfd = open(buf, O_NOATIME | O_NONBLOCK | O_WRONLY | O_CREAT, info->st_mode);
     if(dfd == -1) {
-        perror("dst_path");
+        perror(buf);
         goto abort;
     }
     /* Allocate the aio control block */
@@ -84,7 +78,7 @@ abort:
 }
 
 int job_schedule_read(struct job* aio_job) {
-    printf("Hi\n");
+    printf("read\n");
     aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGREAD;
     aio_job->j_aiocb->aio_fildes = aio_job->src_fd;
     // TODO calculate size
@@ -92,13 +86,11 @@ int job_schedule_read(struct job* aio_job) {
     int ret = aio_read(aio_job->j_aiocb);
     if(ret == -1)
         perror("aio_read");
-    // TODO
-    sleep(1);
     return ret;
 }
 
 int job_schedule_write(struct job* aio_job) {
-    printf("Hi\n");
+    printf("write\n");
     aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGWRITE;
     aio_job->j_aiocb->aio_fildes = aio_job->dst_fd;
     // TODO calculate size
@@ -106,8 +98,6 @@ int job_schedule_write(struct job* aio_job) {
     int ret = aio_write(aio_job->j_aiocb);
     if(ret == -1)
         perror("aio_read");
-    // TODO Need to implement a way to wait until jobs are done
-    sleep(1);
     return ret;
 }
 
@@ -119,8 +109,16 @@ static void aio_sigread_handler(int signo, siginfo_t* si, void* ucontext) {
 static void aio_sigwrite_handler(int signo, siginfo_t* si, void* ucontext) {
     struct job* aio_job = si->si_value.sival_ptr;
     aio_job->j_aiocb->aio_offset += BUF_SIZE;
-    if(aio_job->j_aiocb->aio_offset < aio_job->j_filesz)
+    if(aio_job->j_aiocb->aio_offset < aio_job->j_filesz) {
         job_schedule_read(aio_job);
+    }
+    else {
+        close(aio_job->src_fd);
+        close(aio_job->dst_fd);
+        // FIXME find a better way to indicate done
+        aio_job->src_fd = 0;
+        aio_job->dst_fd = 0;
+    }
 }
 
 int register_signal_handlers(void) {
