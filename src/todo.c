@@ -27,38 +27,37 @@ static struct mpsc {
     struct node {
         struct node* next;
         struct todo* data;
-    } **begin, *end, **start;
+    } **begin, **end, *start;
 } dirs, files;
 void todo_init() {
-    dirs.end = NULL;
-    dirs.start = dirs.begin = &dirs.end;
-    files.end = NULL;
-    files.start = files.begin = &files.end;
+    dirs.start = malloc(sizeof(*dirs.end));
+    dirs.end = &dirs.start->next;
+    dirs.start->next = NULL;
+    dirs.begin = dirs.end;
+    files.start = malloc(sizeof(*dirs.end));
+    files.start->next = NULL;
+    files.end = &files.start->next;
+    files.begin = files.end;
+}
+void todo_destroy() {
+    free(dirs.start);
+    free(files.start);
 }
 static void put(struct mpsc* mpsc, struct todo* todo) {
     struct node* put = malloc(sizeof(struct node));
     put->data = todo;
     put->next = NULL;
-    struct node** target = &mpsc->end;
+    struct node** target = mpsc->end;
     struct node* expected = NULL;
     while (!atomic_compare_exchange_strong(target, &expected, put)) {
         target = &expected->next;
         expected = NULL;
     }
 }
-void clean(struct mpsc* mpsc) {
-    while (1) {
-        struct node* to_free = *mpsc->start;
-        if (!(to_free && to_free->next)) {
-            break;
-        }
-        if (mpsc->begin != mpsc->start && mpsc->begin != &to_free->next) {
-            mpsc->start = &to_free->next->next;
-            free(to_free);
-        } else {
-            break;
-        }
-    }
+static void clean_one(struct mpsc* mpsc) {
+    struct node* to_free = mpsc->start;
+    mpsc->start = to_free->next;
+    free(to_free);
 }
 
 static const char* get(struct mpsc* mpsc, struct stat* info) {
@@ -68,7 +67,7 @@ static const char* get(struct mpsc* mpsc, struct stat* info) {
         const char* ret = got->data->path;
         free(got->data);
         mpsc->begin = &got->next;
-        clean(mpsc);
+        clean_one(mpsc);
         return ret;
     }
     return NULL;

@@ -64,6 +64,7 @@ void trial() {
     }
     assert(popped == paths);
     closedir(dir);
+    todo_destroy();
 }
 
 int main() {

@@ -14,6 +14,12 @@ extern "C"
 #endif
 void add_path(const char* p);
 
+// cleanup todo structures
+#ifdef __cplusplus
+extern "C"
+#endif
+void todo_destroy(void);
+
 // initialize todo structures
 #ifdef __cplusplus
 extern "C"
