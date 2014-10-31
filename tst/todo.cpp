@@ -19,16 +19,14 @@ void* put_path(void* arg) {
     add_path(str);
     return NULL;
 }
-void trial() {
-    set<string> paths;
+set<string> paths;
+void init() {
     DIR* dir = opendir(".");
     if (dir == NULL) {
         perror(".");
         exit(errno);
     }
-    todo_init();
     struct dirent* ent;
-    vector<pthread_t> children;
     do {
         ent = readdir(dir);
         if (ent == NULL) {
@@ -39,14 +37,21 @@ void trial() {
         } else {
             string put(ent->d_name);
             paths.insert(put);
-            pthread_t child;
-            size_t sz = put.length() + 1;
-            char* copy = (char*) malloc(sz);
-            strncpy(copy, ent->d_name, sz);
-            pthread_create(&child, NULL, put_path, copy);
-            children.push_back(child);
         }
     } while(ent);
+    closedir(dir);
+}
+void trial() {
+    vector<pthread_t> children;
+    todo_init();
+    for (auto it = paths.cbegin(); it != paths.cend(); it++) {
+        size_t sz = it->length() + 1;
+        char* copy = (char*) malloc(sz);
+        strncpy(copy, it->c_str(), sz);
+        pthread_t child;
+        pthread_create(&child, NULL, put_path, copy);
+        children.push_back(child);
+    }
     for (auto it = children.cbegin(); it != children.cend(); it++) {
         pthread_join(*it, NULL);
     }
@@ -63,11 +68,11 @@ void trial() {
         }
     }
     assert(popped == paths);
-    closedir(dir);
     todo_destroy();
 }
 
 int main() {
+    init();
     for (size_t i = 0; i < 500; i++) {
         trial();
     }
