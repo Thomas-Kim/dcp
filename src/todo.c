@@ -52,6 +52,7 @@ static void put(struct mpsc* mpsc, struct todo* todo) {
     while (!atomic_compare_exchange_strong(target, &expected, put)) {
         target = &expected->next;
         expected = NULL;
+        // FIXME update mpsc->end in an intelligent way
     }
 }
 static void clean_one(struct mpsc* mpsc) {
