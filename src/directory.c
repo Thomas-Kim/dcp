@@ -26,7 +26,7 @@ void* do_directory(void* arg) {
     }
 }
 
-void directory(char* path) {
+void directory(const char* path) {
     pthread_t thread;
     pthread_create(&thread, NULL,  do_directory, path);
     pthread_detach(thread);

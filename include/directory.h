@@ -1,1 +1,1 @@
-void directory(char* path);
+void directory(const char* path);

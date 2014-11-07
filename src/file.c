@@ -19,14 +19,46 @@
 #define AIO_SIGREAD SIGUSR1
 #define AIO_SIGWRITE SIGUSR2
 
+struct job {
+    size_t j_filesz;
+    int src_fd, dst_fd;
+    struct aiocb* j_aiocb;
+};
+
+
 static char dst_root[STRBUF_SIZE];
 static char src_root[STRBUF_SIZE];
 
-struct job* file(const char* path, struct stat* info) {
+static int job_schedule_read(struct job* aio_job) {
+    //printf("read\n");
+    aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGREAD;
+    aio_job->j_aiocb->aio_fildes = aio_job->src_fd;
+    // TODO calculate size
+    aio_job->j_aiocb->aio_nbytes = aio_job->j_filesz < BUF_SIZE ? aio_job->j_filesz : BUF_SIZE;
+    int ret = aio_read(aio_job->j_aiocb);
+    if(ret == -1)
+        perror("aio_read");
+    return ret;
+}
+
+int job_schedule_write(struct job* aio_job) {
+    //printf("write\n");
+    aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGWRITE;
+    aio_job->j_aiocb->aio_fildes = aio_job->dst_fd;
+    // TODO calculate size
+    aio_job->j_aiocb->aio_nbytes = aio_job->j_filesz < BUF_SIZE ? aio_job->j_filesz : BUF_SIZE;
+    int ret = aio_write(aio_job->j_aiocb);
+    if(ret == -1)
+        perror("aio_read");
+    return ret;
+}
+
+
+void file(const char* path, struct stat* info) {
     int fd = open(path, O_NOATIME | O_NONBLOCK | O_RDONLY);
     if (fd == -1) {
         perror("path");
-        return NULL;
+        return;
     }
     int error;
     if (error = posix_fadvise(fd, 0, info->st_size, POSIX_FADV_SEQUENTIAL)) {
@@ -67,39 +99,18 @@ struct job* file(const char* path, struct stat* info) {
     aio_job->src_fd = fd;
     aio_job->dst_fd = dfd;
 
-    return aio_job;
+    job_schedule_read(aio_job);
+    return;
 abort:
     if(aio_job != NULL)
         free(aio_job);
     if(cb != NULL)
         free(cb);
     close(fd);
-    return NULL;
+    return;
 }
 
-int job_schedule_read(struct job* aio_job) {
-    //printf("read\n");
-    aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGREAD;
-    aio_job->j_aiocb->aio_fildes = aio_job->src_fd;
-    // TODO calculate size
-    aio_job->j_aiocb->aio_nbytes = aio_job->j_filesz < BUF_SIZE ? aio_job->j_filesz : BUF_SIZE;
-    int ret = aio_read(aio_job->j_aiocb);
-    if(ret == -1)
-        perror("aio_read");
-    return ret;
-}
-
-int job_schedule_write(struct job* aio_job) {
-    //printf("write\n");
-    aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGWRITE;
-    aio_job->j_aiocb->aio_fildes = aio_job->dst_fd;
-    // TODO calculate size
-    aio_job->j_aiocb->aio_nbytes = aio_job->j_filesz < BUF_SIZE ? aio_job->j_filesz : BUF_SIZE;
-    int ret = aio_write(aio_job->j_aiocb);
-    if(ret == -1)
-        perror("aio_read");
-    return ret;
-}
+void finish();
 
 static void aio_sigread_handler(int signo, siginfo_t* si, void* ucontext) {
     struct job* aio_job = si->si_value.sival_ptr;
@@ -115,9 +126,7 @@ static void aio_sigwrite_handler(int signo, siginfo_t* si, void* ucontext) {
     else {
         close(aio_job->src_fd);
         close(aio_job->dst_fd);
-        // FIXME find a better way to indicate done
-        aio_job->src_fd = 0;
-        aio_job->dst_fd = 0;
+        finish();
     }
 }
 

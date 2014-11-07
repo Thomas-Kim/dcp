@@ -3,27 +3,16 @@
 
 #include <sys/types.h>
 
-struct job {
-    size_t j_filesz;
-    int src_fd, dst_fd;
-    struct aiocb* j_aiocb;
-};
-
 #ifdef __cplusplus
 extern "C"
 #endif
-struct job* file(const char* path, struct stat* info);
+void file(const char* path, struct stat* info);
 
 
 #ifdef __cplusplus
 extern "C"
 #endif
 int register_signal_handlers(void);
-
-#ifdef __cplusplus
-extern "C"
-#endif
-int job_schedule_read(struct job* aio_job);
 
 // Set the root of the source file tree
 #ifdef __cplusplus

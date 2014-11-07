@@ -37,3 +37,14 @@ void set_src_root(const char * root);
 extern "C"
 #endif
 void set_dst_root(const char * root);
+
+// Note that you have finished a unit of work
+#ifdef __cplusplus
+extern "C"
+#endif
+void finish(void);
+
+#ifdef __cplusplus
+extern "C"
+#endif
+void main_loop(void);

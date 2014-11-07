@@ -8,6 +8,11 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+volatile int finished = 0;
+void finish() {
+    finished = 1;
+}
+
 int main() {
     register_signal_handlers();
     set_src_root("tst/tmpsrc");
@@ -18,19 +23,14 @@ int main() {
         perror("tst/tmpsrc/0");
         exit(errno);
     }
-    struct job* aio_job = file("tst/tmpsrc/0", &info);
+    file("tst/tmpsrc/0", &info);
 
     /* This should schedule a read, which
      * will schedule a write upon completion
      * etc. */
-    job_schedule_read(aio_job);
     // simulate main loop
-    while (1) {
-        if (aio_job->dst_fd) {
-            sched_yield();
-        } else {
-            break;
-        }
+    while (!finished) {
+        sched_yield();
     }
     // ensure files equal using diff
     assert(WEXITSTATUS(system("diff tst/tmpsrc/0 tst/tmpdst/0")) == 0);

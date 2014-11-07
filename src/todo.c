@@ -1,8 +1,10 @@
-#include "todo.h"
+#include "directory.h"
 #include "file.h"
+#include "todo.h"
 
 #include <errno.h>
 #include <fcntl.h>
+#include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,6 +34,7 @@ static struct mpsc {
         struct todo* data;
     } **begin, **end, *start;
 } dirs, files;
+volatile size_t available, in_progress;
 void todo_init() {
     // TODO a constructor-like thing?
     dirs.start = malloc(sizeof(*dirs.start));
@@ -44,6 +47,8 @@ void todo_init() {
     files.start->count = 0;
     files.end = &files.start->next;
     files.begin = files.end;
+
+    available = 4; // TODO adapt
 }
 void todo_destroy() {
     free(dirs.start);
@@ -147,3 +152,34 @@ void add_path(const char* path) {
     }
 }
 
+static void start(void) {
+    atomic_fetch_sub(&available, 1);
+    atomic_fetch_add(&in_progress, 1);
+}
+
+void finish(void) {
+    atomic_fetch_add(&available, 1);
+    atomic_fetch_sub(&in_progress, 1);
+}
+
+void main_loop(void) {
+    while (in_progress); {
+        if (available) {
+            struct stat info;
+            const char* path = get_next(&info);
+            if (path) {
+                mode_t mode = info.st_mode;
+                if (S_ISREG(mode)) {
+                    file(path, &info);
+                } else if (S_ISDIR(mode)) {
+                    directory(path);
+                } else {
+                    fprintf(stderr, "Dunno what to do with %s\n", path);
+                }
+            } else {
+                // check current work
+            }
+        }
+        sched_yield();
+    }
+}

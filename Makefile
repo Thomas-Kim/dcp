@@ -27,6 +27,7 @@ dist-check distcheck:
 		|| echo -e "\033[0;31mfail\033[0m"
 .pass/tst/bin/benchmarks: bin/dcp
 bin/dcp: lib/todo.o lib/directory.o lib/file.o
+tst/bin/todo: lib/directory.o lib/file.o
 papers: $(PAPERS)
 $(MKDIRS):
 	@mkdir -p $@
