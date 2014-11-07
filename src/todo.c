@@ -23,19 +23,25 @@ struct todo {
     #endif // __cplusplus
 };
 
+// TODO restructure so that end is a pointer to and invalid node and not a pointer to a pointer
 static struct mpsc {
     struct node {
         struct node* next;
+        // strictly increasing count
+        size_t count; // XXX overflow
         struct todo* data;
     } **begin, **end, *start;
 } dirs, files;
 void todo_init() {
-    dirs.start = malloc(sizeof(*dirs.end));
+    // TODO a constructor-like thing?
+    dirs.start = malloc(sizeof(*dirs.start));
     dirs.end = &dirs.start->next;
     dirs.start->next = NULL;
+    dirs.start->count = 0;
     dirs.begin = dirs.end;
-    files.start = malloc(sizeof(*dirs.end));
+    files.start = malloc(sizeof(*dirs.start));
     files.start->next = NULL;
+    files.start->count = 0;
     files.end = &files.start->next;
     files.begin = files.end;
 }
@@ -43,17 +49,42 @@ void todo_destroy() {
     free(dirs.start);
     free(files.start);
 }
+
+// target must be a pointer to a "next" pointer
+size_t count_from(struct node** target) {
+    // the count follows the next ptr
+    struct node* node = (struct node*) target;
+    size_t prev_count = node->count;
+    return prev_count;
+}
+static void update_tail(struct mpsc* mpsc, size_t count, struct node** proposed) {
+    size_t proposed_count = count_from(proposed);
+    while (1) {
+        struct node** current_tail = mpsc->end;
+        size_t current_count = count_from(current_tail);
+        if (current_count > proposed_count) {
+            return;
+        }
+        if (atomic_compare_exchange_strong(&mpsc->end, &current_tail, proposed)) {
+            return;
+        }
+    }
+}
+
 static void put(struct mpsc* mpsc, struct todo* todo) {
     struct node* put = malloc(sizeof(struct node));
     put->data = todo;
     put->next = NULL;
-    struct node** target = mpsc->end;
-    struct node* expected = NULL;
-    while (!atomic_compare_exchange_strong(target, &expected, put)) {
-        target = &expected->next;
-        expected = NULL;
-        // FIXME update mpsc->end in an intelligent way
+    struct node** target;
+    struct node* expected;
+    try_node: // TODO restructure as loop
+    target = mpsc->end;
+    expected = NULL;
+    put->count = count_from(target);
+    if (!atomic_compare_exchange_strong(target, &expected, put)) {
+        goto try_node;
     }
+    update_tail(mpsc, put->count, &put->next);
 }
 static void clean_one(struct mpsc* mpsc) {
     struct node* to_free = mpsc->start;
