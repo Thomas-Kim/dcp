@@ -1,4 +1,5 @@
 #include "directory.h"
+#include "todo.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -24,10 +25,28 @@ void* do_directory(void* arg) {
         perror(path);
         exit(errno);
     }
+    struct dirent* ent;
+    char *full_path = malloc(200);
+    do {
+        ent = readdir(dp);
+        if (ent == NULL) {
+            if (errno) {
+                perror(path);
+                return NULL;
+            }
+            continue;
+        }
+        snprintf(full_path, 200, "%s/%s", path, ent->d_name);
+        add_path(full_path);
+    } while(ent != NULL);
+    free(full_path);
+    finish();
+    return NULL;
 }
 
 void directory(const char* path) {
     pthread_t thread;
-    pthread_create(&thread, NULL,  do_directory, path);
+    // TODO copy the path?
+    pthread_create(&thread, NULL,  do_directory, (void*) path);
     pthread_detach(thread);
 }
