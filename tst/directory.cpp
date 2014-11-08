@@ -120,6 +120,7 @@ int main() {
     for (size_t i = 0; i < NUM_TESTS; i++) {
         in.clear();
         out.clear();
+        finished = 0;
         char* test_directory = directories[i];
         directory(test_directory);
         ls(test_directory);
