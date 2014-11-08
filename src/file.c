@@ -36,8 +36,9 @@ static int job_schedule_read(struct job* aio_job) {
     // TODO calculate size
     aio_job->j_aiocb->aio_nbytes = aio_job->j_filesz < BUF_SIZE ? aio_job->j_filesz : BUF_SIZE;
     int ret = aio_read(aio_job->j_aiocb);
-    if(ret == -1)
+    if(ret == -1) {
         perror("aio_read");
+    }
     return ret;
 }
 
@@ -48,16 +49,19 @@ int job_schedule_write(struct job* aio_job) {
     // TODO calculate size
     aio_job->j_aiocb->aio_nbytes = aio_job->j_filesz < BUF_SIZE ? aio_job->j_filesz : BUF_SIZE;
     int ret = aio_write(aio_job->j_aiocb);
-    if(ret == -1)
+    if(ret == -1) {
         perror("aio_read");
+    }
     return ret;
 }
 
+// defined by test or by todo
+void finish();
 
 void file(const char* path, struct stat* info) {
     int fd = open(path, O_NOATIME | O_NONBLOCK | O_RDONLY);
     if (fd == -1) {
-        perror("path");
+        perror(path);
         return;
     }
     int error;
@@ -107,10 +111,9 @@ abort:
     if(cb != NULL)
         free(cb);
     close(fd);
+    finish();
     return;
 }
-
-void finish();
 
 static void aio_sigread_handler(int signo, siginfo_t* si, void* ucontext) {
     struct job* aio_job = si->si_value.sival_ptr;
@@ -137,17 +140,19 @@ int register_signal_handlers(void) {
     read_action.sa_sigaction = aio_sigread_handler;
     read_action.sa_flags = SA_SIGINFO;
     int ret = sigaction(AIO_SIGWRITE, &write_action, NULL);
-    if(ret < 0)
+    if(ret < 0) {
         perror("sigaction");
+    }
     ret = sigaction(AIO_SIGREAD, &read_action, NULL);
-    if(ret < 0)
+    if(ret < 0) {
         perror("sigaction");
+    }
     return 0;
 }
 
 void get_dst_path(const char* path, char* buff) {
     strcpy(buff, dst_root);
-    strcpy(&buff[strlen(dst_root)], &(path[strlen(src_root)]));
+    strcpy(&buff[strlen(dst_root)], &path[strlen(src_root)]);
 }
 
 void set_src_root(const char* root) {

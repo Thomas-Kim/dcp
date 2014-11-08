@@ -1,3 +1,9 @@
+// return whether we ignore an item (ie . or ..)
+#ifdef __cplusplus
+extern "C"
+#endif
+int ignore(const char* entry);
+
 #ifdef __cplusplus
 extern "C"
 #endif

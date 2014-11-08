@@ -51,7 +51,7 @@ void ls(char* dir) {
             perror("fdopen");
             exit(errno);
         }
-        // FIXME get actual system max filename size
+        // TODO get actual system max filename size
         const size_t MAX_FILENAME = 420;
         char* buffer = (char*) malloc(MAX_FILENAME);
         int test_dir_len = strlen(dir) + 1;
@@ -71,6 +71,9 @@ void ls(char* dir) {
             size_t len = strnlen(buffer, MAX_FILENAME);
             assert(len > test_dir_len);
             buffer[len - 1] = '\0'; // erase newline
+            if (ignore(gets)) {
+                continue;
+            }
             in.insert(string(buffer));
         }
         if (fclose(fp)) {
