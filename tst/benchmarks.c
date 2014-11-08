@@ -42,6 +42,9 @@ static void run_benchmark(const char* benchmark_file, const char* name) {
     setup(benchmark_file, test_src);
     int status;
     struct tms interval[2];
+    if (times(&interval[0]) == -1) {
+        perror("times");
+    }
     int pid = fork();
     switch (pid) {
     case -1:
@@ -52,10 +55,7 @@ static void run_benchmark(const char* benchmark_file, const char* name) {
         perror("exec");
         exit(errno);
     default:
-        if (times(&interval[0]) == -1) {
-            perror("times");
-        }
-        pid = wait(&status);
+        pid = waitpid(pid, &status, 0);
         if (times(&interval[1]) == -1) {
             perror("times");
         }

@@ -14,7 +14,10 @@ int main(int argc, char* argv[]) {
     const char* dst = argv[2];
     set_src_root(src);
     set_dst_root(dst);
-    add_path(src);
     register_signal_handlers();
+    todo_init();
+    add_path(src);
+    main_loop();
+    todo_destroy();
     return 0;
 }

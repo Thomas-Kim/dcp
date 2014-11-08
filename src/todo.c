@@ -47,6 +47,7 @@ void todo_init() {
     files.begin = files.end;
 
     available = 4; // TODO adapt
+    in_progress = 0;
 }
 void todo_destroy() {
     free(dirs.start);
@@ -161,7 +162,7 @@ void finish(void) {
 }
 
 void main_loop(void) {
-    while (in_progress); {
+     do {
         if (available) {
             struct stat info;
             const char* path = get_next(&info);
@@ -174,10 +175,11 @@ void main_loop(void) {
                 } else {
                     fprintf(stderr, "Dunno what to do with %s\n", path);
                 }
+                start();
             } else {
                 // check current work
             }
         }
         sched_yield();
-    }
+    } while (in_progress);
 }
