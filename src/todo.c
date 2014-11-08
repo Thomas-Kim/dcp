@@ -1,5 +1,3 @@
-#include "directory.h"
-#include "file.h"
 #include "todo.h"
 
 #include <errno.h>

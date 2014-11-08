@@ -1,3 +1,6 @@
+#include "directory.h"
+#include "file.h"
+
 #include <sys/stat.h>
 
 // get the next work todo, set *info to path's stat info if info not NULL
