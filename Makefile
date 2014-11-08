@@ -26,7 +26,7 @@ dist-check distcheck:
 		&& echo -e "\033[0;32mpass\033[0m" && touch $@\
 		|| echo -e "\033[0;31mfail\033[0m"
 .pass/tst/bin/benchmarks: bin/dcp
-FNM=\([a-z_]*\)
+FNM=\([a-z_A-Z]*\)
 .make/%.d: %.c
 	@mkdir -p $(@D)
 	@$(CC) -MM $(INCLUDE) $< -o $@

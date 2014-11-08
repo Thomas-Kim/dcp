@@ -7,3 +7,5 @@ lib/
 *.log
 tst/tmpsrc
 tst/tmpdst
+.make/
+.pass/
