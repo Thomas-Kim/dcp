@@ -1,4 +1,5 @@
 #include "directory.h"
+#include "dst.h"
 #include "file.h"
 
 #include <sys/stat.h>
@@ -28,18 +29,6 @@ void todo_destroy(void);
 extern "C"
 #endif
 void todo_init(void);
-
-// Set the root of the source file tree
-#ifdef __cplusplus
-extern "C"
-#endif
-void set_src_root(const char * root);
-
-// Set the root of the destination file tree
-#ifdef __cplusplus
-extern "C"
-#endif
-void set_dst_root(const char * root);
 
 // Note that you have finished a unit of work
 #ifdef __cplusplus

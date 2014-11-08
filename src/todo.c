@@ -137,14 +137,17 @@ void add_path(const char* path) {
         perror(path);
         return;
     }
+    size_t size = strlen(path);
+    char* copy = malloc(size + 1);
+    strncpy(copy, path, size + 1);
     mode_t mode = info.st_mode;
     if (S_ISREG(mode)) {
         // regular file
-        add_file(path, &info);
+        add_file(copy, &info);
 
     } else if (S_ISDIR(mode)) {
         // directory
-        add_dir(path, &info);
+        add_dir(copy, &info);
     } else {
         // TODO what do?
         fprintf(stderr, "Dunno what to do with %s\n", path);
@@ -171,7 +174,7 @@ void main_loop(void) {
                 if (S_ISREG(mode)) {
                     file(path, &info);
                 } else if (S_ISDIR(mode)) {
-                    directory(path);
+                    directory(path, mode);
                 } else {
                     fprintf(stderr, "Dunno what to do with %s\n", path);
                 }

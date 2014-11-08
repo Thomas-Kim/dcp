@@ -20,9 +20,15 @@ int ignore(const char* item) {
         || !strcmp(item, "..");
 }
 
-void* do_directory(void* arg) {
-    const char* path = arg;
-    int fd = open(path, O_NOATIME, O_DIRECTORY);
+struct dir_arg {
+    const char* path;
+    mode_t mode;
+};
+void* do_directory(void* _arg) {
+    struct dir_arg* arg = _arg;
+    const char* path = arg->path;
+    mkdir_dst(path, arg->mode);
+    int fd = open(path, O_NOATIME | O_DIRECTORY);
     if (fd == -1) {
         perror(path);
         goto end;
@@ -36,6 +42,7 @@ void* do_directory(void* arg) {
     struct dirent* ent;
     char *full_path = malloc(200);
     do {
+        errno = 0;
         ent = readdir(dp);
         if (ent == NULL) {
             if (errno) {
@@ -53,13 +60,17 @@ void* do_directory(void* arg) {
     free(full_path);
     closedir(dp);
     end:
+    free(arg);
     finish();
     return NULL;
 }
 
-void directory(const char* path) {
+void directory(const char* path, mode_t mode) {
     pthread_t thread;
     // TODO copy the path?
-    pthread_create(&thread, NULL,  do_directory, (void*) path);
+    struct dir_arg* arg = malloc(sizeof(*arg));
+    arg->path = path;
+    arg->mode = mode;
+    pthread_create(&thread, NULL,  do_directory, arg);
     pthread_detach(thread);
 }

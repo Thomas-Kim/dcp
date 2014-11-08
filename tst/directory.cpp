@@ -13,6 +13,8 @@ using std::set;
 #include <string>
 using std::string;
 
+mode_t expected_mode = 0755;
+
 set<string> in;
 set<string> out;
 
@@ -26,6 +28,11 @@ void add_path(const char* path) {
 extern "C"
 void finish() {
     finished = 1;
+}
+
+extern "C"
+void mkdir_dst(const char* path, mode_t mode) {
+    assert(mode == expected_mode);
 }
 
 void ls(char* dir) {
@@ -125,7 +132,7 @@ int main() {
         out.clear();
         finished = 0;
         char* test_directory = directories[i];
-        directory(test_directory);
+        directory(test_directory, expected_mode);
         ls(test_directory);
         while (!finished) {
             sched_yield();
