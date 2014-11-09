@@ -1,4 +1,5 @@
 #include "file.h"
+#include "dst.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -30,7 +31,11 @@ static int job_schedule_read(struct job* aio_job) {
     aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGREAD;
     aio_job->j_aiocb->aio_fildes = aio_job->src_fd;
     // TODO calculate size
-    aio_job->j_aiocb->aio_nbytes = aio_job->j_filesz < BUF_SIZE ? aio_job->j_filesz : BUF_SIZE;
+    off_t ending_position = aio_job->j_aiocb->aio_offset + BUF_SIZE;
+    if(ending_position > aio_job->j_filesz)
+        aio_job->j_aiocb->aio_nbytes = aio_job->j_filesz - aio_job->j_aiocb->aio_offset;
+    else
+        aio_job->j_aiocb->aio_nbytes = BUF_SIZE;
     int ret = aio_read(aio_job->j_aiocb);
     if(ret == -1) {
         perror("aio_read");
@@ -43,7 +48,11 @@ int job_schedule_write(struct job* aio_job) {
     aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGWRITE;
     aio_job->j_aiocb->aio_fildes = aio_job->dst_fd;
     // TODO calculate size
-    aio_job->j_aiocb->aio_nbytes = aio_job->j_filesz < BUF_SIZE ? aio_job->j_filesz : BUF_SIZE;
+    off_t ending_position = aio_job->j_aiocb->aio_offset + BUF_SIZE;
+    if(ending_position > aio_job->j_filesz)
+        aio_job->j_aiocb->aio_nbytes = aio_job->j_filesz - aio_job->j_aiocb->aio_offset;
+    else
+        aio_job->j_aiocb->aio_nbytes = BUF_SIZE;
     int ret = aio_write(aio_job->j_aiocb);
     if(ret == -1) {
         perror("aio_read");
