@@ -143,10 +143,13 @@ static void aio_sigwrite_handler(int signo, siginfo_t* si, void* ucontext) {
 
 int register_signal_handlers(void) {
     struct sigaction write_action, read_action;
+    const int flags = SA_SIGINFO | SA_NODEFER;
+    sigemptyset(&write_action.sa_mask);
     write_action.sa_sigaction = aio_sigwrite_handler;
-    write_action.sa_flags = SA_SIGINFO;
+    write_action.sa_flags = flags;
+    sigemptyset(&read_action.sa_mask);
     read_action.sa_sigaction = aio_sigread_handler;
-    read_action.sa_flags = SA_SIGINFO;
+    read_action.sa_flags = flags;
     int ret = sigaction(AIO_SIGWRITE, &write_action, NULL);
     if(ret < 0) {
         perror("sigaction");
