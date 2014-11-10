@@ -71,6 +71,11 @@ void directory(const char* path, mode_t mode) {
     struct dir_arg* arg = malloc(sizeof(*arg));
     arg->path = path;
     arg->mode = mode;
-    pthread_create(&thread, NULL,  do_directory, arg);
+    errno = pthread_create(&thread, NULL,  do_directory, arg);
+    if (errno) {
+        perror("pthread_create");
+        finish();
+        return;
+    }
     pthread_detach(thread);
 }
