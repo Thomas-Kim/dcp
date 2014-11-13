@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <sched.h>
+#include <stdatomic.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -10,7 +11,7 @@
 
 volatile int finished = 0;
 void finish() {
-    finished = 1;
+    atomic_fetch_add(&finished, 1);;
 }
 
 int main() {
@@ -23,13 +24,17 @@ int main() {
         perror("tst/tmpsrc/0");
         exit(errno);
     }
-    file("tst/tmpsrc/0", &info);
+    const size_t SIMUL = 1;
+    for (size_t i = 0; i < SIMUL; i++) {
+        file("tst/tmpsrc/0", &info);
+    }
+    //file("tst/tmpsrc/0", &info);
 
     /* This should schedule a read, which
      * will schedule a write upon completion
      * etc. */
     // simulate main loop
-    while (!finished) {
+    while (finished != SIMUL) {
         sched_yield();
     }
     // ensure files equal using diff

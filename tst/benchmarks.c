@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/times.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -15,13 +16,20 @@
 #define SRC "tst/tmpsrc"
 #define DST "tst/tmpdst"
 #define PATH "bin/"
-#define CMD "dcp"
+#define DCP "dcp"
 static const char* const test_src = SRC;
 static const char* const test_dst = DST;
-static const char* const pathed_cmd = PATH CMD;
-static const char* const cmd = CMD;
-char* const argv[4] = {
-    CMD,
+static const char* const pathed_dcp = PATH DCP;
+static const char* const pathed_cpr = "/bin/cp";
+char* const dcp_argv[4] = {
+    DCP,
+    SRC,
+    DST,
+    NULL
+};
+char* const cpr_argv[5] = {
+    "cp",
+    "-r",
     SRC,
     DST,
     NULL
@@ -38,32 +46,52 @@ static void run_benchmark(const char* benchmark_file, const char* name) {
     }
     printf(name);
     putchar(':');
-    putchar('\t');
+    system("rm -rf " SRC);
     setup(benchmark_file, test_src);
-    int status;
-    struct tms interval[2];
-    if (times(&interval[0]) == -1) {
-        perror("times");
-    }
-    int pid = fork();
-    switch (pid) {
-    case -1:
-        perror("fork");
-        exit(errno);
-    case 0:
-        execv(pathed_cmd, argv);
-        perror("exec");
-        exit(errno);
-    default:
-        pid = waitpid(pid, &status, 0);
-        if (times(&interval[1]) == -1) {
-            perror("times");
+    for (int i = 0; i < 2; i++) {
+        // set up work
+        system("rm -rf " DST);
+        // pick command
+        const char* pathed_cmd;
+        char *const * argv;
+        switch (i) {
+            case 0:
+                pathed_cmd = pathed_dcp;
+                argv = dcp_argv;
+                break;
+            case 1:
+                pathed_cmd = pathed_cpr;
+                argv = cpr_argv;
+                break;
+            default:
+                fprintf(stderr, "BAD ITERATION %i\n", i);
+                exit(EINVAL);
         }
-        break;
+        int status;
+        struct timeval interval[2];
+        if (gettimeofday(&interval[0], NULL) == -1) {
+            perror("gettimeofday");
+        }
+        int pid = fork();
+        switch (pid) {
+        case -1:
+            perror("fork");
+            exit(errno);
+        case 0:
+            execv(pathed_cmd, argv);
+            perror("exec");
+            exit(errno);
+        default:
+            pid = waitpid(pid, &status, 0);
+            if (gettimeofday(&interval[1], NULL) == -1) {
+                perror("times");
+            }
+            break;
+        }
+        time_t elapsed = (interval[1].tv_usec - interval[0].tv_usec)
+                        + 1000000 * (interval[1].tv_sec - interval[0].tv_sec);
+        printf("\t%u", elapsed);
     }
-    clock_t elapsed = (interval[1].tms_cutime - interval[0].tms_cutime)
-                    + (interval[1].tms_cstime - interval[0].tms_cstime);
-    printf("%u", elapsed);
     
     putchar('\n');
 }

@@ -101,7 +101,7 @@ void todo_init() {
     files.end = &files.start->next;
     files.begin = files.end;
 
-    available = 4; // TODO adapt
+    available = 4; // TODO adapt availability
     in_progress = 0;
 }
 void todo_destroy() {
@@ -121,10 +121,8 @@ const char* get_next(struct stat* info) {
         }
     }
     size_t n = strlen(got->path) + 1;
-    char* ret = malloc(n);
-    strncpy(ret, got->path, n);
+    char* ret = got->path;
     memcpy(info, &got->info, sizeof(*info));
-    free(got->path);
     free(got);
     return ret;
 }
@@ -189,10 +187,9 @@ void main_loop(void) {
                     fprintf(stderr, "Dunno what to do with %s\n", path);
                 }
                 start();
-            } else {
-                // check current work
             }
         }
+        // TODO use futex or something instead
         sched_yield();
     } while (in_progress);
 }
