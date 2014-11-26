@@ -21,6 +21,9 @@
 #define AIO_SIGREAD SIGUSR1
 #define AIO_SIGWRITE SIGUSR2
 
+// defined by test or by todo
+void finish();
+
 struct job {
     size_t j_filesz;
     int src_fd, dst_fd;
@@ -38,9 +41,30 @@ static void sayf(FILE* stream, const char* format, ...) {
     pthread_mutex_unlock(&print_mutex);
 }
 
+static int job_schedule_write(struct job* aio_job);
+static void aio_sigread_handler(union sigval sigval) {
+    struct job* aio_job = sigval.sival_ptr;
+    job_schedule_write(aio_job);
+}
+static int job_schedule_read(struct job* aio_job);
+static void aio_sigwrite_handler(union sigval sigval) {
+    struct job* aio_job = sigval.sival_ptr;
+    aio_job->j_aiocb->aio_offset += BUF_SIZE;
+    if(aio_job->j_aiocb->aio_offset < aio_job->j_filesz) {
+        job_schedule_read(aio_job);
+    }
+    else {
+        close(aio_job->src_fd);
+        close(aio_job->dst_fd);
+        //sayf(stderr, "FINISH %s\n", aio_job->path);
+        finish();
+    }
+}
+
 static int job_schedule_read(struct job* aio_job) {
     //sayf(stderr, "read   %s\n", aio_job->path);
-    aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGREAD;
+    aio_job->j_aiocb->aio_sigevent.sigev_notify_function = aio_sigread_handler;
+    aio_job->j_aiocb->aio_sigevent.sigev_value.sival_ptr = aio_job;
     aio_job->j_aiocb->aio_fildes = aio_job->src_fd;
     // TODO calculate size
     off_t ending_position = aio_job->j_aiocb->aio_offset + BUF_SIZE;
@@ -57,7 +81,7 @@ static int job_schedule_read(struct job* aio_job) {
 
 int job_schedule_write(struct job* aio_job) {
     //sayf(stderr, "write  %s\n", aio_job->path);
-    aio_job->j_aiocb->aio_sigevent.sigev_signo = AIO_SIGWRITE;
+    aio_job->j_aiocb->aio_sigevent.sigev_notify_function = aio_sigwrite_handler;
     aio_job->j_aiocb->aio_fildes = aio_job->dst_fd;
     // TODO calculate size
     off_t ending_position = aio_job->j_aiocb->aio_offset + BUF_SIZE;
@@ -71,9 +95,6 @@ int job_schedule_write(struct job* aio_job) {
     }
     return ret;
 }
-
-// defined by test or by todo
-void finish();
 
 void file(const char* path, struct stat* info) {
     int fd = open(path, O_NOATIME | O_NONBLOCK | O_RDONLY);
@@ -114,7 +135,7 @@ void file(const char* path, struct stat* info) {
     cb->aio_reqprio = 0;
     cb->aio_offset = 0;
     /* Single-threaded approach -> signals */
-    cb->aio_sigevent.sigev_notify = SIGEV_SIGNAL;
+    cb->aio_sigevent.sigev_notify = SIGEV_THREAD;
     cb->aio_sigevent.sigev_value.sival_ptr = aio_job;
 
     aio_job->j_aiocb = cb;
@@ -141,43 +162,6 @@ abort_close:
     return;
 }
 
-static void aio_sigread_handler(int signo, siginfo_t* si, void* ucontext) {
-    struct job* aio_job = si->si_value.sival_ptr;
-    job_schedule_write(aio_job);
-}
-
-static void aio_sigwrite_handler(int signo, siginfo_t* si, void* ucontext) {
-    struct job* aio_job = si->si_value.sival_ptr;
-    aio_job->j_aiocb->aio_offset += BUF_SIZE;
-    if(aio_job->j_aiocb->aio_offset < aio_job->j_filesz) {
-        job_schedule_read(aio_job);
-    }
-    else {
-        close(aio_job->src_fd);
-        close(aio_job->dst_fd);
-        //sayf(stderr, "FINISH %s\n", aio_job->path);
-        finish();
-    }
-}
-
 int register_signal_handlers(void) {
-    struct sigaction write_action, read_action;
-    const int flags = SA_SIGINFO;
-    sigemptyset(&write_action.sa_mask);
-    sigaddset(&write_action.sa_mask, AIO_SIGREAD);
-    write_action.sa_sigaction = aio_sigwrite_handler;
-    write_action.sa_flags = flags;
-    sigemptyset(&read_action.sa_mask);
-    sigaddset(&write_action.sa_mask, AIO_SIGWRITE);
-    read_action.sa_sigaction = aio_sigread_handler;
-    read_action.sa_flags = flags;
-    int ret = sigaction(AIO_SIGWRITE, &write_action, NULL);
-    if(ret < 0) {
-        perror("sigaction");
-    }
-    ret = sigaction(AIO_SIGREAD, &read_action, NULL);
-    if(ret < 0) {
-        perror("sigaction");
-    }
     return 0;
 }
