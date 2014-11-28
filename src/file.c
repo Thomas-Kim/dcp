@@ -16,7 +16,7 @@
 #include <unistd.h>
 
 
-#define BUF_SIZE (0x1000 * 20)
+#define BUF_SIZE (0x1000 * 80)
 #define STRBUF_SIZE 0x400
 #define AIO_SIGREAD SIGUSR1
 #define AIO_SIGWRITE SIGUSR2
