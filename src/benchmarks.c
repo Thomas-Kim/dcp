@@ -66,6 +66,7 @@ static void make_level(
         free(buffer);
         fclose(f);
     }
+    fclose(rand);
     up:
     chdir("..");
 }

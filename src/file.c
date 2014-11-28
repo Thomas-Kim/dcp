@@ -1,5 +1,8 @@
+#define _GNU_SOURCE
+
 #include "file.h"
 #include "dst.h"
+
 
 #include <aio.h>
 #include <errno.h>
@@ -7,9 +10,6 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdarg.h>
-#define flock _flock
-#include <linux/fcntl.h>
-#undef flock
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,6 +44,11 @@ static void sayf(FILE* stream, const char* format, ...) {
 static int job_schedule_write(struct job* aio_job);
 static void aio_sigread_handler(union sigval sigval) {
     struct job* aio_job = sigval.sival_ptr;
+    ssize_t ahead = readahead(aio_job->src_fd, aio_job->j_aiocb->aio_offset + BUF_SIZE, BUF_SIZE);
+    if (ahead == -1) {
+        perror("readahead");
+        exit(errno);
+    }
     job_schedule_write(aio_job);
 }
 static int job_schedule_read(struct job* aio_job);

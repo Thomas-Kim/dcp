@@ -101,7 +101,7 @@ void todo_init() {
     files.end = &files.start->next;
     files.begin = files.end;
 
-    available = 4; // TODO adapt availability
+    available = 8; // TODO adapt availability
     in_progress = 0;
 }
 void todo_destroy() {
