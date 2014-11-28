@@ -93,7 +93,7 @@ void setup(const char* benchmark_file, const char* target) {
         }
     }
     char cwd[300];
-    char* curr = getcwd(cwd,sizeof(cwd));
+    const char* curr = getcwd(cwd,sizeof(cwd));
     if (curr == NULL) {
         perror("cwd");
     }
