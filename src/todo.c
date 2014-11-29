@@ -109,9 +109,6 @@ void todo_destroy() {
     free(files.start);
 }
 
-
-
-
 const char* get_next(struct stat* info) {
     struct todo* got = gettodo_t_ptr(&dirs);
     if (!got) {

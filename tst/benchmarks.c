@@ -90,6 +90,11 @@ static void run_benchmark(const char* benchmark_file, const char* name) {
         time_t elapsed = (interval[1].tv_usec - interval[0].tv_usec)
                         + 1000000 * (interval[1].tv_sec - interval[0].tv_sec);
         printf("\t%u", elapsed);
+        int ret = system("diff -r " SRC " " DST);
+        if (ret == -1) {
+            perror("system");
+        }
+        assert(WEXITSTATUS(ret) == EXIT_SUCCESS);
     }
     
     putchar('\n');
