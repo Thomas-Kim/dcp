@@ -7,8 +7,8 @@ LINK=-lstdc++ -lrt
 MKDIRS=lib bin tst/bin .pass .pass/tst/bin .make .make/bin .make/tst/bin
 INCLUDE=$(addprefix -I,include)
 EXECS=$(addprefix bin/,setup dcp)
-TESTS=$(addprefix tst/bin/,todo equals file directory)
-PAPERS=proposal/proposal.pdf
+TESTS=$(addprefix tst/bin/,todo equals file directory benchmarks)
+PAPERS=proposal/proposal.pdf report/report.pdf
 .PHONY: default all clean again check papers distcheck dist-check
 .SECONDARY:
 default: all

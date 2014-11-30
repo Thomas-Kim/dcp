@@ -1,0 +1,88 @@
+\documentclass[12pt]{article}
+
+\usepackage{natbib}
+\usepackage[cm]{fullpage}
+\usepackage{graphicx}
+\pagenumbering{gobble}
+
+\linespread{1.00}
+
+\usepackage{titlesec} % Allows customization of titles
+
+\setlength\parindent{24pt}
+
+\usepackage[
+  top    = 2.50cm,
+  bottom = 1.50cm,
+  left   = 1.50cm,
+  right  = 1.50cm]{geometry}
+
+\usepackage{setspace}
+
+\title{\vspace{-25mm}\fontsize{16pt}{10pt}\selectfont\textbf{Proposal}} % Article title
+
+\author{
+  \textsc{William Morriss} \\
+  \textsc{Thomas Kim}
+}
+\date{}
+
+\begin{document}
+
+\maketitle % Insert title
+
+\section{Overview}
+An improved version of 'cp -r,' dcp, was implemented.
+This version will takes advantage of Linux's asynchronous IO interfaces to create
+opportunities for parallelism, and minimizes the time spent blocking on disk
+IO by leveraging fallocate and readahead. In order to ensure reads
+are more likely to result in hits in the buffer cache when memory is scarce, POSIX
+fadvise is used. To ensure optimal layout of files for writing, POSIX
+fallocate is used. The main goal of dcp is to fully saturate disk IO
+at all times in order to have a fast, portable solution which supports
+any POSIX compliant filesystem interface.
+
+\section{Implementation}
+
+\subsection{Multithreading}
+
+\subsection{Readahead}
+Linux readahead and POSIX fadvise provide similar functionality,
+so POSIX fadvise will be used.
+POSIX fadvise will be used to ensure that pages will be available
+in the buffer cache when read, and that pages will be evicted from
+the cache as soon as possible. All reads in dcp will
+always be sequential, so FADV\_SEQUENTIAL will be used.
+
+\subsection{Fallocate}
+POSIX fallocate will be used to allow the destination filesystem to
+allocate blocks in an efficient way. The use of fallocate is
+fairly straightforward and is expected to increase write speeds
+provided the filesystem on the destination disk intelligently
+allocates blocks.
+
+\section {Test platform}
+\begin{tabular}{l|r r}
+  Component & Specification                   & Interface \\
+  CPU       & Intel i7-4770k @ 3.50ghz                    \\
+  HDD A     &         1tb @ 7200rpm           & SATA 2.0  \\
+  HDD B     &                 2tb @ 7200rpm   & SATA 2.0  \\
+  SSD A     &         250gb                   & SATA 2.0  \\
+  External A& 3tb @ 5400rpm                   & USB 3.0   \\
+\end{tabular}
+\section{Benchmarking methodology}
+Dcp was tested on consumer-grade personal computers using 3 different types
+of disk: solid state drive, traditional disk-based hard drive, and
+an external USB3.0 disk based hard drive.
+Three main benchmarks were run on the data, %TODO
+.
+Additionally, one practical test was done to demonstrate the advantage
+of dcp over standard cp -r. 5.7gb of video files split among 5 subdirectories were copied between
+HDD A and HDD B to simulate a backup of videos, a usage pattern common for one of the researchers.
+This benchmark was not repeated for other cases as it is simply intended to convey a practical example use
+case. %TODO maybe disregard this test case
+
+\section{Results}
+
+
+\end{document}
