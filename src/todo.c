@@ -85,9 +85,12 @@ static type get##type(struct mpsc##type* mpsc) {\
     }\
     return NULL;\
 }\
+static int has##type(struct mpsc##type* mpsc) {\
+    return *mpsc->begin != NULL;\
+}\
 struct mpsc##type
 mpsc(todo_t_ptr) dirs, files;
-volatile size_t available, in_progress;
+volatile size_t thread_cap, in_progress;
 void todo_init() {
     // TODO a constructor-like thing?
     dirs.start = malloc(sizeof(*dirs.start));
@@ -101,7 +104,7 @@ void todo_init() {
     files.end = &files.start->next;
     files.begin = files.end;
 
-    available = 8; // TODO adapt availability
+    thread_cap = 8; // TODO adapt availability
     in_progress = 0;
 }
 void todo_destroy() {
@@ -109,6 +112,11 @@ void todo_destroy() {
     free(files.start);
 }
 
+static int has_next(void) {
+    int ret = hastodo_t_ptr(&dirs)
+        || hastodo_t_ptr(&files);
+    return ret;
+}
 const char* get_next(struct stat* info) {
     struct todo* got = gettodo_t_ptr(&dirs);
     if (!got) {
@@ -160,18 +168,16 @@ void add_path(const char* path) {
 }
 
 static void start(void) {
-    atomic_fetch_sub(&available, 1);
     atomic_fetch_add(&in_progress, 1);
 }
 
 void finish(void) {
-    atomic_fetch_add(&available, 1);
     atomic_fetch_sub(&in_progress, 1);
 }
 
 void main_loop(void) {
      do {
-        if (available) {
+        if (thread_cap > in_progress) {
             struct stat info;
             const char* path = get_next(&info);
             if (path) {
@@ -184,9 +190,13 @@ void main_loop(void) {
                     fprintf(stderr, "Dunno what to do with %s\n", path);
                 }
                 start();
+            } else {
+                // TODO use futex or something instead
+                sched_yield();
             }
+        } else {
+            // TODO use futex or something instead
+            sched_yield();
         }
-        // TODO use futex or something instead
-        sched_yield();
-    } while (in_progress);
+    } while (in_progress || has_next());
 }
