@@ -44,8 +44,26 @@ any POSIX compliant filesystem interface.
 
 \section{Implementation}
 
+\subsection{MPSCQ}
+The implementation uses a multi-producer, single-consumer queue to manage its
+work queue. The producers are the asynchronous directory read operations and
+the consumer is the main loop, which begins work and limits in-progress task
+count.
+% TODO MPSC implementation details
+
 \subsection{Multithreading}
-%TODO
+The implementation uses the POSIX asynchronous i/o. Job completion was initially
+received with a signal (SIGEV\_SIGNAL) and the file work was entirely signal-driven
+but interrupts were happening at antagonistic times within and without interrupt
+handlers. In particular, glibc lazily protects aio with a reentrant mutex, so an
+interrupt handler within an interrupt handler would violate its interrupted handler's
+critical section. Iniitially this was fixed by making a MPSCQ for aio operations to schedule
+so that they were scheduled by the main loop and not by handlers but this deadlocked with low
+probability because glibc malloc, required by the MPSCQ, is protected by a spinlock and
+would be interrupted inside its critical section and that interrupt would not be
+able to acquire the lock from itself. Moving off of signals and onto threads (SIGEV\_THREAD)
+vastly simplified the implementation and got around all of those pesky single-threaded
+concurrency issues.
 
 \subsection{Readahead and buffer size}
 POSIX fadvise is used to ensure that pages will be available
