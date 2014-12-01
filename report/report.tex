@@ -63,26 +63,31 @@ in all workloads and across all systems. %TODO do we need this paragraph?
 
 \subsection{Fallocate}
 POSIX fallocate is used to allow the destination filesystem to
-allocate blocks in an efficient way. The use of fallocate is
-fairly straightforward and increases write speeds on
-target ext4 and NTFS filesystems.
+allocate blocks in an efficient way. The copying program knows
+the source file size and supplies it to the operating system.
+The use of fallocate is fairly straightforward and measurably
+increases write speeds on target ext4 and NTFS filesystems.
 
 \section {Test platforms}
 \textbf{Test Platform 1}\\
 \begin{tabular}{|l|r r|}
   \hline
   Component & Specification                   & Interface \\
-  CPU       & Intel i7-4770k @ 3.50ghz        &           \\
-  HDD A     &         1tb @ 7200rpm           & SATA II   \\
-  HDD B     &                 2tb @ 5600rpm   & SATA II   \\
-  SSD A     &         250gb                   & SATA II   \\
-  External A& 3tb @ 5400rpm                   & USB 3.0   \\
+  CPU       & Intel i7-4770k @ 3.50GHz        &           \\
+  HDD A     &         1TB @ 7200rpm           & SATA II   \\
+  HDD B     &                 2TB @ 5600rpm   & SATA II   \\
+  SSD A     &         250GB                   & SATA II   \\
+  External A& 3TB @ 5400rpm                   & USB 3.0   \\
   \hline
 \end{tabular}\\\\
 \textbf{Test Platform 2}\\
 \begin{tabular}{|l|r r|}
   \hline
   Component & Specification                   & Interface \\
+  CPU       & Intel i7-2670QM @ 2.20GHz       &           \\
+  RAM       & 8 GB @ 1333 MHz                 &           \\
+  OS        & Linux 3.17.4-1                  &           \\
+  HDD       & 1TB @ 5400rpm                   & SATA II 3.0Gb/s  \\
   \hline
 \end{tabular}
 \section{Benchmarking methodology}
