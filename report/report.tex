@@ -45,6 +45,7 @@ any POSIX compliant filesystem interface.
 \section{Implementation}
 
 \subsection{Multithreading}
+%TODO
 
 \subsection{Readahead and buffer size}
 POSIX fadvise is used to ensure that pages will be available
@@ -66,18 +67,27 @@ allocate blocks in an efficient way. The use of fallocate is
 fairly straightforward and increases write speeds on
 target ext4 and NTFS filesystems.
 
-\section {Test platform}
-\begin{tabular}{l|r r}
+\section {Test platforms}
+\textbf{Test Platform 1}\\
+\begin{tabular}{|l|r r|}
+  \hline
   Component & Specification                   & Interface \\
-  CPU       & Intel i7-4770k @ 3.50ghz                    \\
-  HDD A     &         1tb @ 7200rpm           & SATA 2.0  \\
-  HDD B     &                 2tb @ 7200rpm   & SATA 2.0  \\
-  SSD A     &         250gb                   & SATA 2.0  \\
+  CPU       & Intel i7-4770k @ 3.50ghz        &           \\
+  HDD A     &         1tb @ 7200rpm           & SATA II   \\
+  HDD B     &                 2tb @ 5600rpm   & SATA II   \\
+  SSD A     &         250gb                   & SATA II   \\
   External A& 3tb @ 5400rpm                   & USB 3.0   \\
+  \hline
+\end{tabular}\\\\
+\textbf{Test Platform 2}\\
+\begin{tabular}{|l|r r|}
+  \hline
+  Component & Specification                   & Interface \\
+  \hline
 \end{tabular}
 \section{Benchmarking methodology}
 Dcp was tested on consumer-grade personal computers using 3 different types
-of disk: solid state drive, traditional disk-based hard drive, and
+of drive: solid state drive, traditional disk-based hard drive, and
 an external USB3.0 disk based hard drive. With the exception of the external
 hard drive, which is formatted in NTFS, the disks are formatted in ext4.
 The combinations of stable storage media tested include:\\
@@ -95,14 +105,46 @@ The combinations of stable storage media tested include:\\
   External A & HDD A    & ext - hdd   \\
   \hline
 \end{tabular} \\
+
+These drive configurations were tested using test platform 1.
+
+In addition to the tests done on different drive configurations,
+dcp was benchmarked with certain optimizations disabled or modified, including
+the number of threads, fadvise, and readahead. These tests were done on test platform 2.
+
+In order to ensure that the benchmark files are not stored in the buffer cache
+for subsequent executions of 'cp -r' or dcp, each benchmark was regenerated
+before each execution using random data read from \texttt{/dev/urandom}.
+Additionally, the resulting copied data from calling dcp
+was compared to the generated data using 'diff -r' in order to
+ensure that a full copy of the data was in fact executed.
+
+An interesting problem which arose when testing these various combinations
+was that HDD B and External A had aggressive power-saving mechanisms built into the
+disk controller firmware. This caused inconsistent performance, which
+manifested initially as a bimodal distribution of execution times. This
+problem was remedied by running 'ls' on the root directory of the
+drive immediately before running each test to ensure the disk was not in power-saving
+mode.
+
 Three main benchmarks were run on the data, named broad, fat, and deep.
 These will be elaborated upon in the following section.
 
 \section{Results}
+The benchmarks were run 5 times each for dcp and 'cp -r,' and the execution
+times were recorded. The sample mean and sample standard deviation were taken,
+and a 2-sample 1-tailed unpaired t-test was executed to compare the execution
+times for dcp and 'cp -r' for each disk configuration within a benchmark.
+
+\subsection{Broad Benchmark}
 Each file in the broad benchmark is 300kb (300000 bytes), and
 the top level directory contains 7 files and 15 subdirectories. Each of the 15 subdirectories
 contains 7 files and 15 subdirectories, which in turn contain 7 files.
-The broad benchmark is % TODO, justification for why we chose this benchmark
+The broad benchmark is similar to copying a  documents folder, as it is
+relatively shallow but contains many subdirectories with files similar in size to
+pdf documents. This benchmark was chosen to test dcp's ability to prioritize work
+to keep IO saturated, as file reads blocking directory reads would severely bottleneck
+the creation of new IO jobs and thus reduce saturation.
 The following graph shows the mean execution time across 5 trials of the broad benchmark across multiple disk configurations.
 \vspace{5mm}
 
@@ -110,12 +152,39 @@ The following graph shows the mean execution time across 5 trials of the broad b
 
 \vspace{5mm}
 
-The results show... %TODO
+The results show that dcp can gracefully handle workloads involving
+similar numbers of directories and files, and prioritizes work
+well to beat 'cp -r.' In all cases, $p < 0.005$, indicating that
+the performance of dcp is statistically signficantly different from
+that of 'cp -r,' and the graph clearly shows that dcp outperforms
+'cp -r' on this benchmark.
 
+The poor performance of the external
+drive benchmarks is apparent here, and is a common theme throughout
+the various tests run on the system. The external drive is not only
+consistently slow, but also suffers from inconsistent throughput,
+suffering from standard deviations from 1.5 for hdd-ext dcp
+to 2.4 for ext-ssd 'cp -r' and dcp. This is likely due to the
+extremely aggressive power-saving features of the external hard drive,
+the relatively low rpm of the drive (5400) and the slow speed of the
+USB interface.
+
+Important to note here is that dcp outperformed 'cp -r' by a factor
+of 1.9 on the hdd-hdd configuration and a factor of 1.7 on the
+ssd-hdd configuration, which is important because these are common
+usage patterns for many people. Backups are often done between disk drives
+or from an SSD to a disk-based hard drive, and these cases are representative
+of these situations.
+
+\subsection{Fat Benchmark}
 Each file in the fat benchmark is 200kb (200000 bytes), and
 the top level directory contains 3 files and 35 subdirectories. Each
 of the 35 subdirectories contains 3 files and 35 subdirectories, which in turn contain 3 files.
-The fat benchmark is % TODO, justification for why we chose this benchmark
+The fat benchmark contains a large number of subdirectories and not many files per subdirectory.
+This benchmark represents a sort of 'worst-case' for recursive copying, as files are small and numerous,
+and directory trees have high branching factors with sparsely distributed files. This is an important
+benchmark, as the performance of normal system copy utilities is often subpar for these operations,
+so it is a prime target for optimization in dcp.
 The following graph shows the mean execution time across 5 trials of the fat benchmark across multiple disk configurations.
 \vspace{5mm}
 
@@ -123,10 +192,21 @@ The following graph shows the mean execution time across 5 trials of the fat ben
 
 \vspace{5mm}
 
+Again, as with the broad benchmark results, the fat benchmark results confirm that
+dcp consistently outperforms 'cp -r.' In all cases, the mean execution time for
+dcp is statistically significantly lower than that of 'cp -r' ($p < 0.005$).
+Again, in the important cases of ssd-hdd and hdd-hdd, dcp outperforms 'cp -r'
+by a factor of 1.5 and 1.8 respectively.
+
+\subsection{Deep Benchmark}
 Each file in the deep benchmark is 20mb (20000000 bytes), and
 the top level directory contains 1 file and 1 subdirectory. There
 are 6 nested subdirectories in this benchmark.
-The deep benchmark is % TODO, justification for why we chose this benchmark
+The deep benchmark is purposely small in order to ensure that dcp prioritizes
+directories over files in such a way that it avoids blocking as much as possible.
+If dcp were to prioritize reading and writing files over directories, it would end up
+blocking on all 6 subdirectories and thus would lose to 'cp -r.' This is demonstrated
+when evaluating the performance of dcp with certain optimizations removed. % TODO Will's data
 The following graph shows the mean execution time across 5 trials of the deep benchmark across multiple disk configurations.
 
 \vspace{5mm}
@@ -134,6 +214,16 @@ The following graph shows the mean execution time across 5 trials of the deep be
 \includegraphics[width=500pt]{graphs/deep-manydisk.png}
 
 \vspace{5mm}
+
+The deep benchmark results reflect the same statistically significantly lower
+execution time of dcp than 'cp -r' ($p < 0.005$). Contrasting with the previous
+benchmarks, ssd-ext shows a significantly (1.7x) higher copy time for 'cp -r' than
+dcp. This is perhaps indicative of the fact that raw throughput may be the limiting
+factor when copying files across a USB interface, and that smart prioritization of
+tasks when copying smaller amounts of data allows the kernel to intelligently
+batch writes in such a way that the external drive minimizes seek time. This particular
+test, due to the small volume of data copied, is aimed more at testing a potential weakness
+of dcp than a practical situation.
 
 \section{Practical test}
 Additionally, one practical test was done to demonstrate the advantage
@@ -145,8 +235,18 @@ case.
 The results on this practical test show that dcp in its current state outperforms cp -r by a decent margin even
 in situations where a disk's theoretical maximum throughput is approached (typically with large sequential reads/writes).
 The mean execution time of cp -r is approximately 2:10, while the mean execution time of dcp is 1:50, with a sample standard deviation of
-5 seconds and $p < 0.01$.
+5 seconds and $p < 0.01$. Roughly calculating the raw throughput, dcp copies at approximately 53 mb/s while 'cp -r' copies
+at approximately 45mb/s. It is noteworthy that the CrystalDiskBenchmark results for HDD B indicated that it has a sequential
+write throughput of 55mb/s when the disk was benchmarked 2.5 years earlier by one of the researchers.
 
-
+\section{Observations}
+One interesting observation is that tests done on the first test platform took significantly longer
+than tests done on the second test platform for similar disk configurations. While more testing and
+research is necessary to ascertain the cause of this performance discrepancy, one key difference between
+the platforms which may have caused this behavior is that test platform 1 used older disks which were
+about 50-60\% full, as opposed to test platform 2 which used a single new mostly-empty disk. Additionally,
+the solid state drive used by test platform 1 was the boot drive, whereas the disk used by platform 2
+was not. Finally, the specific behavior of prefetching, buffer caching, and file IO may have been affected by differences
+in the kernel version between the two platforms, as well as the fact that platform 1 runs Ubuntu while platform 2 runs Arch.
 
 \end{document}
