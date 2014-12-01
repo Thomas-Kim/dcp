@@ -45,11 +45,24 @@ any POSIX compliant filesystem interface.
 \section{Implementation}
 
 \subsection{MPSCQ}
-The implementation uses a multi-producer, single-consumer queue to manage its
+The implementation uses a multi-producer, single-consumer queue (MPSCQ) to manage its
 work queue. The producers are the asynchronous directory read operations and
 the consumer is the main loop, which begins work and limits in-progress task
 count.
-% TODO MPSC implementation details
+
+The MPSCQ is implemented with a linked list and atomic compare exchange instructions.
+The consumer has a pointer to the next node to be freed. Its next data to read
+is in the next node, so an empty list has one node. This way, the consumer frees
+one node per read. Each linked list node is annotated with a count and each
+node's count is one more than the previous. A producer creates the next node in
+its entirety based on its understanding of the end of the queue and then
+compare exchanges the address of that node into the node's next pointer,
+expecting NULL. To assist future threads in finding the end, it does compare
+exchange on the linked list's tail in a loop until either its proposed node is
+the tail or a node of greater count is the tail.
+The MPSCQ is thus lock free but not wait free and would be interrupt-reentrant
+safe as well (discussion below) if it did not call glibc malloc.
+% TODO show pseudocode
 
 \subsection{Multithreading}
 The implementation uses the POSIX asynchronous i/o. Job completion was initially
