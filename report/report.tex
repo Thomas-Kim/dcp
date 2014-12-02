@@ -72,7 +72,7 @@ safe as well (discussion below) if it did not call glibc malloc. \\
 % TODO show pseudocode
 
 \subsection{Multithreading}
-The implementation uses the POSIX asynchronous i/o ~\cite{aio}. Job completion was initially
+The implementation uses the POSIX asynchronous i/o \cite{aio}. Job completion was initially
 received with a signal (SIGEV\_SIGNAL) and the file work was entirely signal-driven
 but interrupts were happening at antagonistic times within and without interrupt
 handlers. In particular, glibc lazily protects aio with a reentrant mutex, so an
@@ -87,7 +87,7 @@ concurrency issues. \\
 
 \subsection{Readahead and buffer size}
 POSIX fadvise is used to ensure that pages will be available
-in the buffer cache when read~\cite{fadvise}, and that pages will be evicted from
+in the buffer cache when read \cite{fadvise}, and that pages will be evicted from
 the cache as soon as possible. All reads in dcp are
 sequential, so FADV\_SEQUENTIAL is used. \\
 
@@ -101,7 +101,7 @@ in all workloads and across all systems. \\%TODO do we need this paragraph?
 
 \subsection{Fallocate}
 POSIX fallocate is used to allow the destination filesystem to
-allocate blocks in an efficient way ~\cite{fallocate}. The copying program knows
+allocate blocks in an efficient way \cite{fallocate}. The copying program knows
 the source file size and supplies it to the operating system.
 The use of fallocate is fairly straightforward and measurably
 increases write speeds on target ext4 filesystems, as demonstrated
@@ -109,6 +109,7 @@ by some of the following benchmarks. \\
 
 \section {Test platforms}
 \textbf{Test Platform 1}\\
+\vspace{5mm}
 \begin{tabular}{|l|r|r|}
   \hline
   Component & Specification                   & Interface \\
@@ -122,6 +123,7 @@ by some of the following benchmarks. \\
   \hline
 \end{tabular}\\\\
 \textbf{Test Platform 2}\\
+\vspace{5mm}
 \begin{tabular}{|l|r|r|}
   \hline
   Component & Specification                   & Interface \\
@@ -372,7 +374,7 @@ in the kernel version between the two platforms, as well as the fact that platfo
 \bibitem{rejected}
     GNU
     \emph{Coreutils - rejected feature requests}.
-    \url{https://www.gnu.org/software/coreutils/rejected_requests.html}
+    \url{https://www.gnu.org/software/coreutils/rejected\_requests.html}
 \bibitem{cppara}
     Korb, Bruce
     \emph{Another rfe: "cp" this time}.
