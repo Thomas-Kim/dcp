@@ -77,7 +77,7 @@ received with a signal (SIGEV\_SIGNAL) and the file work was entirely signal-dri
 but interrupts were happening at antagonistic times within and without interrupt
 handlers. In particular, glibc lazily protects aio with a reentrant mutex \cite{aio_read}, so an
 interrupt handler within an interrupt handler would violate its interrupted handler's
-critical section. Iniitially this was fixed by making a MPSCQ for aio operations to schedule
+critical section. Initially this was fixed by making a MPSCQ for aio operations to schedule
 so that they were scheduled by the main loop and not by handlers but this deadlocked with low
 probability because glibc malloc, required by the MPSCQ, is protected by a spinlock \cite{malloc} and
 would be interrupted inside its critical section and that interrupt would not be
@@ -209,7 +209,7 @@ The following graph shows the mean execution time across 5 trials of the broad b
 The results show that dcp can gracefully handle workloads involving
 similar numbers of directories and files, and prioritizes work
 well to beat 'cp -r.' In all cases, $p < 0.005$, indicating that
-the performance of dcp is statistically signficantly different from
+the performance of dcp is statistically significantly different from
 that of 'cp -r,' and the graph clearly shows that dcp outperforms
 'cp -r' on this benchmark. \\
 
