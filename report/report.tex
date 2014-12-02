@@ -42,9 +42,9 @@ fallocate is used. The main goal of dcp is to fully saturate disk IO
 at all times in order to have a fast, portable solution which supports
 any POSIX compliant filesystem interface. \\
 
-GNU coreutils has rejected a number of feature requests and one of them was
+GNU coreutils has rejected \cite{rejected} a number of feature requests and one of them was
 ``cp --parallel'', which would read and write from different file offsets in
-parallel\cite{cppara}. This feature was rejected on the suggestion of using multiple dd
+parallel \cite{cppara}. This feature was rejected on the suggestion of using multiple dd
 processes instead and its github project \cite{pcopy} is incomplete and
 inactive. Splitting larger files may in fact improve performance but this project
 did not explore it.
@@ -367,12 +367,17 @@ was not. Finally, the specific behavior of prefetching, buffer caching, and file
 in the kernel version between the two platforms, as well as the fact that platform 1 runs Ubuntu while platform 2 runs Arch. \\
 
 \begin{thebibliography}{9}
+\bibitem{rejected}
+    GNU
+    \emph{Coreutils - rejected feature requests}.
+    \url{https://www.gnu.org/software/coreutils/rejected_requests.html}
 \bibitem{cppara}
-    Bruce Korb
+    Korb, Bruce
     \emph{Another rfe: "cp" this time}.
     \url{http://lists.gnu.org/archive/html/coreutils/2012-04/msg00079.html}
 \bibitem{pcopy}
-    pcopy
+    Korb, Bruce
+    \emph{pcopy}.
     \url{https://github.com/brkorb/pcopy}
 \end{thebibliography}
 \end{document}
