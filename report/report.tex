@@ -75,7 +75,7 @@ safe as well (discussion below) if it did not call glibc malloc. \\
 The implementation uses the POSIX asynchronous i/o \cite{aio}. Job completion was initially
 received with a signal (SIGEV\_SIGNAL) and the file work was entirely signal-driven
 but interrupts were happening at antagonistic times within and without interrupt
-handlers. In particular, glibc lazily protects aio with a reentrant mutex, so an
+handlers. In particular, glibc lazily protects aio with a reentrant mutex \cite{aio_read}, so an
 interrupt handler within an interrupt handler would violate its interrupted handler's
 critical section. Iniitially this was fixed by making a MPSCQ for aio operations to schedule
 so that they were scheduled by the main loop and not by handlers but this deadlocked with low
@@ -371,6 +371,18 @@ was not. Finally, the specific behavior of prefetching, buffer caching, and file
 in the kernel version between the two platforms, as well as the fact that platform 1 runs Ubuntu while platform 2 runs Arch. \\
 
 \begin{thebibliography}{9}
+\bibitem{aio}
+    Asynchronous IO
+    \url{http://man7.org/linux/man-pages/man7/aio.7.html}
+\bibitem{fallocate}
+    Fallocate
+    \url{http://man7.org/linux/man-pages/man3/posix\_fallocate.3.html}
+\bibitem{fadvise}
+    Fadvise
+    \url{http://linux.die.net/man/2/posix\_fadvise}
+\bibitem{aio_read}
+    glibc
+    sysdeps/pthread/aio\_misc.c
 \bibitem{rejected}
     GNU
     \emph{Coreutils - rejected feature requests}.
@@ -383,13 +395,5 @@ in the kernel version between the two platforms, as well as the fact that platfo
     Korb, Bruce
     \emph{pcopy}.
     \url{https://github.com/brkorb/pcopy}
-\bibitem{aio}
-    Asynchronous IO
-    \url{http://man7.org/linux/man-pages/man7/aio.7.html}
-  \bibitem{fallocate}
-    Fallocate
-    \url{http://man7.org/linux/man-pages/man3/posix\_fallocate.3.html}
-  \bibitem{fadvise}
-    \url{http://linux.die.net/man/2/posix\_fadvise}
 \end{thebibliography}
 \end{document}
